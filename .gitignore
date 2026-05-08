@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Vercel
+.vercel/
+
+# Editor noise
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project source — lives in its own repo (Tyler6666666/106a_final_project).
+# We only ship the rendered site + the demo videos referenced by index.html.
+106a_final_project/
+
+# Logs
+*.log
+ogre.log

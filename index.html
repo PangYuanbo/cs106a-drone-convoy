@@ -1,0 +1,3111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Autonomous Safe Drone Convoy Following · CS 106A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ───────────── Cursor-inspired design tokens ───────────── */
+  :root {
+    /* Colors */
+    --canvas-parchment: #f7f7f4;
+    --inkwell: #262510;
+    --muted-stone: #7a7974;
+    --deep-shadow: #141414;
+    --pebble-gray: #e6e5e0;
+    --onyx-outline: #f54e00;
+    --chartreuse-alert: #4ade80;
+    --goldenrod-accent: #c08532;
+    --forest-green-action: #34785c;
+    --highlight-beige: #cdcdc9;
+
+    /* Code editor (Cursor-style dark panel) */
+    --code-bg: #18181b;
+    --code-bg-soft: #1f1f23;
+    --code-bg-tab: #131316;
+    --code-line: #2a2a30;
+    --code-text: #d4d4d4;
+    --code-muted: #6e6e76;
+    --code-string: #a8d99a;
+    --code-keyword: #f97583;
+    --code-fn: #82aaff;
+    --code-num: #f5b07a;
+    --code-comment: #6e6e76;
+
+    /* Type */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Shadows */
+    --shadow-xl: rgba(0, 0, 0, 0.14) 0px 28px 70px 0px,
+                 rgba(0, 0, 0, 0.10) 0px 14px 32px 0px,
+                 oklab(0.263084 -0.00230259 0.0124794 / 0.10) 0px 0px 0px 1px;
+    --shadow-subtle: oklab(0.263084 -0.00230259 0.0124794 / 0.10) 0px 0px 0px 1px,
+                     rgba(0, 0, 0, 0.10) 0px 8px 18px -10px;
+
+    /* Radius */
+    --r-sm: 4px;
+    --r-md: 6px;
+    --r-lg: 10px;
+
+    /* Layout */
+    --page-max: 1240px;
+    --section-gap: 96px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--canvas-parchment);
+    color: var(--inkwell);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01", "cv11", "tnum";
+  }
+
+  a { color: var(--onyx-outline); text-decoration: none; transition: opacity .15s; }
+  a:hover { opacity: .75; }
+
+  ::selection { background: rgba(245, 78, 0, 0.18); color: var(--deep-shadow); }
+
+  /* ───────────── Nav ───────────── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    background: rgba(247, 247, 244, 0.78);
+    border-bottom: 1px solid rgba(38, 37, 16, 0.08);
+  }
+  .nav-inner {
+    max-width: var(--page-max); margin: 0 auto;
+    padding: 14px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; letter-spacing: -0.02em; font-size: 14px;
+    color: var(--deep-shadow);
+  }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 4px;
+    background: var(--inkwell);
+    display: grid; place-items: center;
+    color: var(--canvas-parchment);
+    font-family: var(--font-mono); font-weight: 600; font-size: 11px;
+  }
+  .nav ul {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; gap: 22px; flex-wrap: wrap;
+  }
+  .nav ul a {
+    color: var(--muted-stone); font-size: 13px; font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .nav ul a:hover { color: var(--inkwell); opacity: 1; }
+  .nav .nav-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--onyx-outline); color: var(--onyx-outline);
+    border-radius: var(--r-sm);
+    transition: background .15s, color .15s;
+  }
+  .nav .nav-cta:hover { background: var(--onyx-outline); color: var(--canvas-parchment); opacity: 1; }
+
+  /* ───────────── Layout ───────────── */
+  .container { max-width: var(--page-max); margin: 0 auto; padding: 0 28px; }
+  section { padding: var(--section-gap) 0; }
+  section + section { padding-top: 0; }
+
+  .eyebrow {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted-stone); font-weight: 500;
+    margin-bottom: 12px;
+  }
+  h1, h2, h3 { color: var(--deep-shadow); font-weight: 500; letter-spacing: -0.02em; }
+  h2 { font-size: clamp(28px, 3.4vw, 44px); line-height: 1.1; margin: 0 0 16px;
+       letter-spacing: -0.03em; max-width: 820px; }
+  h3 { font-size: 20px; line-height: 1.25; margin: 24px 0 10px; letter-spacing: -0.015em; }
+  p { color: var(--inkwell); max-width: 720px; margin: 0 0 12px; }
+  p.lede { color: var(--muted-stone); font-size: 17px; line-height: 1.55; max-width: 720px; }
+  strong { color: var(--deep-shadow); font-weight: 600; }
+  hr.section-divider {
+    border: 0; border-top: 1px solid rgba(38, 37, 16, 0.08);
+    margin: 0; max-width: var(--page-max); margin-left: auto; margin-right: auto;
+  }
+
+  /* ───────────── Hero ───────────── */
+  .hero { padding: 64px 0 56px; }
+  .hero-grid {
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px;
+    align-items: start;
+  }
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 11px;
+    background: var(--pebble-gray);
+    border-radius: 999px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); letter-spacing: -0.01em;
+    margin-bottom: 22px;
+  }
+  .hero-pill .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--chartreuse-alert);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
+
+  h1.title {
+    font-size: clamp(38px, 5.8vw, 68px);
+    line-height: 1; letter-spacing: -0.045em;
+    margin: 0 0 22px;
+    color: var(--deep-shadow); font-weight: 500;
+  }
+  .hero-sub {
+    color: var(--muted-stone); font-size: 17px; line-height: 1.5;
+    max-width: 580px;
+    margin: 0 0 28px;
+  }
+  .cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 18px; border-radius: var(--r-sm);
+    font-size: 14px; font-weight: 500; letter-spacing: -0.005em;
+    border: 1px solid transparent; cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s, transform .1s;
+  }
+  .btn.primary {
+    background: var(--inkwell); color: var(--canvas-parchment);
+    border-color: var(--inkwell);
+  }
+  .btn.primary:hover { background: var(--deep-shadow); opacity: 1; }
+  .btn.outline {
+    background: transparent; color: var(--onyx-outline);
+    border-color: var(--onyx-outline);
+  }
+  .btn.outline:hover { background: var(--onyx-outline); color: var(--canvas-parchment); opacity: 1; }
+  .btn.ghost {
+    background: transparent; color: var(--inkwell);
+    border-color: rgba(38, 37, 16, 0.18);
+  }
+  .btn.ghost:hover { background: var(--pebble-gray); opacity: 1; }
+  .btn .arrow { transition: transform .15s; }
+  .btn:hover .arrow { transform: translateX(2px); }
+
+  /* ───────────── Hero code window ───────────── */
+  .code-window {
+    background: var(--code-bg);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+  }
+  .code-window-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--code-bg-tab);
+    border-bottom: 1px solid var(--code-line);
+  }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots i {
+    width: 11px; height: 11px; border-radius: 50%; display: inline-block;
+    background: #3a3a3f;
+  }
+  .code-dots i.r { background: #ff5f57; }
+  .code-dots i.y { background: #febc2e; }
+  .code-dots i.g { background: #28c840; }
+  .code-tabs {
+    display: flex; gap: 0; align-items: center;
+    margin-left: 6px; flex: 1;
+    overflow-x: auto;
+  }
+  .code-tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; cursor: pointer;
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--code-muted);
+    border: 1px solid transparent;
+    border-radius: var(--r-sm) var(--r-sm) 0 0;
+    background: transparent;
+    transition: color .15s, background .15s;
+    white-space: nowrap;
+  }
+  .code-tab .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--code-muted);
+  }
+  .code-tab.active {
+    background: var(--code-bg);
+    color: #e8e8e8;
+    border-color: var(--code-line);
+    border-bottom-color: var(--code-bg);
+    margin-bottom: -1px;
+  }
+  .code-tab.active .dot { background: var(--chartreuse-alert); }
+  .code-tab:hover:not(.active) { color: #c0c0c0; }
+  .code-meta {
+    margin-left: auto;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--code-muted);
+    padding-left: 12px;
+  }
+  .code-body {
+    position: relative;
+  }
+  .code-pane { display: none; }
+  .code-pane.active { display: block; }
+  pre.code {
+    margin: 0;
+    padding: 18px 20px;
+    font-family: var(--font-mono);
+    font-size: 13px; line-height: 1.65;
+    color: var(--code-text);
+    overflow-x: auto;
+    background: transparent;
+  }
+  pre.code .c-kw  { color: var(--code-keyword); }
+  pre.code .c-fn  { color: var(--code-fn); }
+  pre.code .c-str { color: var(--code-string); }
+  pre.code .c-num { color: var(--code-num); }
+  pre.code .c-cm  { color: var(--code-comment); font-style: italic; }
+  pre.code .c-pun { color: #b0b0b8; }
+  .code-copy {
+    position: absolute; top: 10px; right: 12px;
+    padding: 4px 9px; font-size: 11px; font-family: var(--font-mono);
+    color: var(--code-muted);
+    background: var(--code-bg-soft);
+    border: 1px solid var(--code-line);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    opacity: 0; pointer-events: none;
+  }
+  .code-window:hover .code-copy { opacity: 1; pointer-events: auto; }
+  .code-copy:hover { color: #e8e8e8; border-color: var(--code-muted); }
+  .code-copy.copied { color: var(--chartreuse-alert); border-color: var(--chartreuse-alert); }
+
+  /* ───────────── Stats strip ───────────── */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0; margin-top: 64px;
+    border-top: 1px solid rgba(38, 37, 16, 0.10);
+    border-bottom: 1px solid rgba(38, 37, 16, 0.10);
+  }
+  .stat {
+    padding: 22px 24px;
+    border-right: 1px solid rgba(38, 37, 16, 0.10);
+  }
+  .stat:last-child { border-right: 0; }
+  .stat .num {
+    font-size: 30px; font-weight: 500; letter-spacing: -0.03em;
+    color: var(--deep-shadow); line-height: 1;
+  }
+  .stat .lbl {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); margin-top: 8px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+
+  /* ───────────── Cards ───────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+  .card {
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-radius: var(--r-md);
+    padding: 22px 24px;
+    transition: border-color .15s, transform .15s, box-shadow .15s;
+  }
+  .card:hover {
+    border-color: rgba(38, 37, 16, 0.22);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-subtle);
+  }
+  .card .icon {
+    width: 32px; height: 32px; border-radius: var(--r-sm);
+    background: var(--pebble-gray);
+    display: grid; place-items: center;
+    color: var(--inkwell); font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 16px; }
+  .card p { font-size: 14px; color: var(--muted-stone); margin: 0; }
+  .card ul.tight { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted-stone); }
+  .card ul.tight li { margin: 3px 0; }
+
+  /* ───────────── Team cards ───────────── */
+  .team-card {
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    transition: border-color .15s, transform .15s;
+  }
+  .team-card:hover {
+    border-color: var(--inkwell);
+    transform: translateY(-1px);
+  }
+  .team-card .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--pebble-gray);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 13px;
+    font-weight: 500; color: var(--inkwell);
+    margin-bottom: 12px;
+  }
+  .team-card .role {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted-stone);
+  }
+  .team-card .name {
+    font-size: 16px; font-weight: 500; color: var(--deep-shadow);
+    letter-spacing: -0.015em;
+    margin: 4px 0 8px;
+  }
+  .team-card .bio { font-size: 13px; color: var(--muted-stone); line-height: 1.5; }
+
+  /* ───────────── Dual architecture ───────────── */
+  .dual-arch {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin-top: 24px;
+  }
+  .dual-arch .col {
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-radius: var(--r-md);
+    padding: 20px;
+  }
+  .dual-arch .col-title {
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--onyx-outline); font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .dual-arch .col.face .col-title { color: var(--forest-green-action); }
+  .dual-arch .step {
+    background: var(--pebble-gray);
+    border: 1px solid rgba(38, 37, 16, 0.06);
+    border-radius: var(--r-sm);
+    padding: 12px 14px;
+    margin: 8px 0;
+    font-size: 13.5px;
+  }
+  .dual-arch .step strong { color: var(--deep-shadow); }
+  .dual-arch .step .topic {
+    color: var(--onyx-outline); font-family: var(--font-mono); font-size: 12.5px;
+  }
+  .dual-arch .col.face .step .topic { color: var(--forest-green-action); }
+  .dual-arch .arrow {
+    text-align: center; color: var(--muted-stone);
+    font-family: var(--font-mono); font-size: 14px;
+    padding: 4px 0;
+  }
+  .shared-bus {
+    margin-top: 16px;
+    background: var(--pebble-gray);
+    border: 1px dashed rgba(38, 37, 16, 0.18);
+    border-radius: var(--r-md); padding: 14px 18px;
+    font-size: 13.5px; color: var(--inkwell);
+  }
+  .shared-bus strong { color: var(--deep-shadow); }
+  .shared-bus code, p code, td code, .step code {
+    font-family: var(--font-mono); font-size: 12.5px;
+    background: rgba(38, 37, 16, 0.06);
+    color: var(--inkwell);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  /* ───────────── Pipeline · animated horizontal flow ───────────── */
+  .pipeline {
+    margin-top: 32px;
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    box-shadow: var(--shadow-subtle);
+  }
+  .pipeline-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .pipeline-eyebrow {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--muted-stone); margin-right: 4px;
+  }
+  .pipeline-mode {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    background: transparent;
+    border: 1px solid rgba(38, 37, 16, 0.14);
+    color: var(--muted-stone);
+    font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .pipeline-mode:hover { color: var(--inkwell); border-color: var(--inkwell); }
+  .pipeline-mode.active {
+    background: var(--inkwell); color: var(--canvas-parchment);
+    border-color: var(--inkwell);
+  }
+  .pipeline-mode .md-dot {
+    width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+  }
+  .pipeline-mode .md-dot.orange { background: var(--onyx-outline); }
+  .pipeline-mode .md-dot.green  { background: var(--forest-green-action); }
+  .pipeline-live {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); letter-spacing: 0.04em;
+  }
+  .pipeline-live .lv-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--chartreuse-alert);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.18);
+    animation: pulse 1.8s infinite;
+  }
+
+  .pipeline-flow {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pipeline-stage {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    padding: 16px 12px;
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-radius: var(--r-md);
+    background: var(--canvas-parchment);
+    transition: border-color .2s, transform .2s, box-shadow .2s;
+    min-width: 0;
+  }
+  .pipeline-stage:hover {
+    border-color: var(--inkwell);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-subtle);
+  }
+  .pipeline-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--pebble-gray);
+    color: var(--inkwell);
+    display: grid; place-items: center;
+    margin-bottom: 10px;
+    transition: background .25s, color .25s;
+  }
+  .pipeline-icon svg { width: 22px; height: 22px; display: block; }
+  .pipeline-stage:hover .pipeline-icon {
+    background: var(--inkwell); color: var(--canvas-parchment);
+  }
+  .pipeline-name {
+    font-family: var(--font-mono); font-size: 13px;
+    color: var(--deep-shadow); font-weight: 500;
+    margin-bottom: 4px;
+    transition: opacity .25s;
+  }
+  .pipeline-meta {
+    font-size: 12px; color: var(--muted-stone);
+    line-height: 1.4;
+    transition: opacity .25s;
+  }
+  .pipeline-name.fading, .pipeline-meta.fading { opacity: 0; }
+
+  .pipeline-conn {
+    position: relative;
+    width: 100%;
+    min-width: 90px;
+    padding: 0 6px;
+  }
+  .pipeline-line {
+    position: relative;
+    height: 2px;
+    background: linear-gradient(90deg,
+      rgba(38,37,16,0.06) 0%,
+      rgba(38,37,16,0.30) 50%,
+      rgba(38,37,16,0.06) 100%);
+    overflow: visible;
+  }
+  .pipeline-line::after {
+    content: ""; position: absolute;
+    right: -6px; top: 50%; transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 6px solid rgba(38,37,16,0.40);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+  .pipeline-line .pkt {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--inkwell);
+    animation: pkt-flow-h 2.2s linear infinite;
+    animation-delay: var(--d, 0s);
+  }
+  .pipeline-conn.accent .pipeline-line {
+    background: linear-gradient(90deg,
+      rgba(245,78,0,0.10) 0%,
+      rgba(245,78,0,0.55) 50%,
+      rgba(245,78,0,0.10) 100%);
+  }
+  .pipeline-conn.accent .pipeline-line::after {
+    border-left-color: var(--onyx-outline);
+  }
+  .pipeline-conn.accent .pipeline-line .pkt {
+    background: var(--onyx-outline);
+    box-shadow: 0 0 8px rgba(245,78,0,0.50);
+  }
+  .pipeline[data-mode="face"] .pipeline-conn.accent .pipeline-line {
+    background: linear-gradient(90deg,
+      rgba(52,120,92,0.10) 0%,
+      rgba(52,120,92,0.55) 50%,
+      rgba(52,120,92,0.10) 100%);
+  }
+  .pipeline[data-mode="face"] .pipeline-conn.accent .pipeline-line::after {
+    border-left-color: var(--forest-green-action);
+  }
+  .pipeline[data-mode="face"] .pipeline-conn.accent .pipeline-line .pkt {
+    background: var(--forest-green-action);
+    box-shadow: 0 0 8px rgba(52,120,92,0.50);
+  }
+  @keyframes pkt-flow-h {
+    0%   { left: -8px; opacity: 0; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { left: calc(100% + 8px); opacity: 0; }
+  }
+
+  .pipeline-topic {
+    position: absolute; top: -30px; left: 0; right: 0;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    line-height: 1.2;
+  }
+  .pipeline-topic .t {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--inkwell); font-weight: 500;
+  }
+  .pipeline-conn.accent .pipeline-topic .t { color: var(--onyx-outline); }
+  .pipeline[data-mode="face"] .pipeline-conn.accent .pipeline-topic .t { color: var(--forest-green-action); }
+  .pipeline-topic .m {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--muted-stone);
+  }
+
+  .pipeline-foot {
+    margin-top: 26px;
+    padding-top: 18px;
+    border-top: 1px dashed rgba(38, 37, 16, 0.16);
+    display: flex; gap: 24px; flex-wrap: wrap;
+    font-size: 13px; color: var(--muted-stone);
+  }
+  .pipeline-foot strong { color: var(--deep-shadow); }
+  .pipeline-foot .pipeline-also { margin-left: auto; }
+
+  @media (max-width: 1080px) {
+    .pipeline-flow {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .pipeline-conn {
+      width: 100%;
+      min-width: 0;
+      padding: 6px 0;
+    }
+    .pipeline-line {
+      width: 2px; height: 56px; margin: 0 auto;
+      background: linear-gradient(180deg,
+        rgba(38,37,16,0.06) 0%,
+        rgba(38,37,16,0.30) 50%,
+        rgba(38,37,16,0.06) 100%);
+    }
+    .pipeline-line::after {
+      right: 50%; top: auto; bottom: -6px;
+      transform: translateX(50%);
+      border-top: 6px solid rgba(38,37,16,0.40);
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-bottom: 0;
+    }
+    .pipeline-line .pkt {
+      top: auto; left: 50%; transform: translateX(-50%);
+      animation: pkt-flow-v 2.2s linear infinite;
+      animation-delay: var(--d, 0s);
+    }
+    .pipeline-conn.accent .pipeline-line {
+      background: linear-gradient(180deg,
+        rgba(245,78,0,0.10) 0%,
+        rgba(245,78,0,0.55) 50%,
+        rgba(245,78,0,0.10) 100%);
+    }
+    .pipeline-conn.accent .pipeline-line::after { border-top-color: var(--onyx-outline); }
+    .pipeline[data-mode="face"] .pipeline-conn.accent .pipeline-line {
+      background: linear-gradient(180deg,
+        rgba(52,120,92,0.10) 0%,
+        rgba(52,120,92,0.55) 50%,
+        rgba(52,120,92,0.10) 100%);
+    }
+    .pipeline[data-mode="face"] .pipeline-conn.accent .pipeline-line::after { border-top-color: var(--forest-green-action); }
+    .pipeline-topic {
+      position: static; top: auto;
+      flex-direction: row; gap: 6px;
+      margin-bottom: 4px;
+    }
+    @keyframes pkt-flow-v {
+      0%   { top: -8px; opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { top: calc(100% + 8px); opacity: 0; }
+    }
+  }
+
+  /* ───────────── Tables ───────────── */
+  .table-wrap {
+    margin-top: 16px;
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-radius: var(--r-md);
+    overflow: hidden; overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(38, 37, 16, 0.08); }
+  tr:last-child td { border-bottom: 0; }
+  thead th {
+    background: var(--pebble-gray);
+    color: var(--muted-stone);
+    font-family: var(--font-mono); font-weight: 500;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  td code { font-size: 12px; }
+
+  /* ───────────── State machine ───────────── */
+  .state-row {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px; margin-top: 24px;
+    align-items: stretch;
+  }
+  .state {
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-radius: var(--r-md);
+    padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 6px;
+    position: relative;
+  }
+  .state .num {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); letter-spacing: 0.06em;
+  }
+  .state .name {
+    font-size: 16px; font-weight: 600;
+    color: var(--deep-shadow);
+    letter-spacing: -0.015em;
+  }
+  .state .desc { font-size: 13px; color: var(--muted-stone); line-height: 1.45; }
+  .state .name-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+  }
+  .state.idle .name-dot { background: var(--muted-stone); }
+  .state.arm  .name-dot { background: var(--forest-green-action); }
+  .state.fol  .name-dot { background: var(--chartreuse-alert); box-shadow: 0 0 0 3px rgba(74,222,128,0.18); }
+  .state.sea  .name-dot { background: var(--goldenrod-accent); }
+  .state.lan  .name-dot { background: var(--onyx-outline); }
+
+  /* ───────────── Issue / Future cards ───────────── */
+  .issue-card {
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-left: 3px solid var(--goldenrod-accent);
+    border-radius: var(--r-sm);
+    padding: 16px 18px;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .issue-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-subtle); }
+  .issue-card .num {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--goldenrod-accent); font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  .issue-card .head {
+    display: block;
+    font-weight: 600; color: var(--deep-shadow);
+    font-size: 15px; margin: 4px 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .issue-card .fix { font-size: 13px; color: var(--muted-stone); line-height: 1.55; }
+
+  .future-card {
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    border-left: 3px solid var(--onyx-outline);
+    border-radius: var(--r-sm);
+    padding: 16px 18px;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .future-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-subtle); }
+  .future-card .num {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--onyx-outline); font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  .future-card .head {
+    display: block;
+    font-weight: 600; color: var(--deep-shadow);
+    font-size: 15px; margin: 4px 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .future-card .desc { font-size: 13px; color: var(--muted-stone); line-height: 1.55; }
+
+  /* ───────────── Demo videos ───────────── */
+  .demo-block { margin-top: 36px; }
+  .demo-block:first-child { margin-top: 16px; }
+  .demo-block h3 {
+    font-size: 22px; margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .demo-block .demo-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .demo-block .demo-tag .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--chartreuse-alert);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.18);
+    animation: pulse 1.8s infinite;
+  }
+  .video-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .video-card {
+    background: var(--code-bg);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-xl);
+    margin-top: 16px;
+  }
+  .video-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px;
+    background: var(--code-bg-tab);
+    border-bottom: 1px solid var(--code-line);
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--code-muted);
+  }
+  .video-header .dots { display: flex; gap: 6px; }
+  .video-header .dots i {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+  }
+  .video-header .dots i.r { background: #ff5f57; }
+  .video-header .dots i.y { background: #febc2e; }
+  .video-header .dots i.g { background: #28c840; }
+  .video-header .filename { color: #e8e8e8; }
+  .video-header .speed-tag {
+    margin-left: auto;
+    padding: 2px 7px; font-size: 10px;
+    border: 1px solid var(--code-line);
+    border-radius: 3px;
+    color: var(--chartreuse-alert);
+    letter-spacing: 0.08em;
+  }
+  .video-card video {
+    display: block; width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover; background: #000;
+  }
+  .video-meta {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    margin-top: 12px; font-size: 13px;
+    color: var(--muted-stone);
+  }
+  .video-meta span strong { color: var(--deep-shadow); margin-right: 4px; }
+
+  /* ───────────── Code panel (tabbed) ───────────── */
+  .code-panel { margin-top: 24px; }
+
+  /* ───────────── Hero side notes ───────────── */
+  .pill {
+    display: inline-block;
+    padding: 3px 9px; font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.04em;
+    border-radius: 999px;
+    background: var(--pebble-gray);
+    color: var(--inkwell);
+    margin-right: 6px;
+  }
+  .pill.aruco { background: rgba(245, 78, 0, 0.10); color: var(--onyx-outline); }
+  .pill.face  { background: rgba(52, 120, 92, 0.10); color: var(--forest-green-action); }
+
+  /* ───────────── Footer ───────────── */
+  footer {
+    padding: 56px 0 64px;
+    border-top: 1px solid rgba(38, 37, 16, 0.08);
+    text-align: center;
+    color: var(--muted-stone); font-size: 13px;
+    margin-top: 32px;
+  }
+  footer .small { color: var(--muted-stone); opacity: 0.7; }
+
+  /* ───────────── Cursor-Desktop · auto-playing core demo ───────────── */
+  .cursor-desktop {
+    margin-top: 28px;
+    background: var(--canvas-parchment);
+    border-radius: 12px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(38, 37, 16, 0.08);
+    overflow: hidden;
+  }
+  .cd-titlebar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: var(--pebble-gray);
+    border-bottom: 1px solid rgba(38, 37, 16, 0.08);
+    position: relative;
+  }
+  .cd-titlebar .code-dots i {
+    width: 11px; height: 11px; border-radius: 50%; display: inline-block;
+  }
+  .cd-titlebar .code-dots i.r { background: #ff5f57; }
+  .cd-titlebar .code-dots i.y { background: #febc2e; }
+  .cd-titlebar .code-dots i.g { background: #28c840; }
+  .cd-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--muted-stone); letter-spacing: -0.005em;
+  }
+  .cd-controls {
+    margin-left: auto; display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone);
+  }
+  .cd-toggle {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 999px;
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    cursor: pointer; transition: border-color .15s, color .15s;
+  }
+  .cd-toggle:hover { border-color: var(--inkwell); color: var(--inkwell); }
+  .cd-toggle .play-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--chartreuse-alert);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
+    animation: pulse 1.8s infinite;
+  }
+  .cd-toggle.paused .play-dot {
+    background: var(--muted-stone); box-shadow: none; animation: none;
+  }
+  .cd-progress {
+    height: 2px; background: rgba(38, 37, 16, 0.06);
+    position: relative;
+  }
+  .cd-progress-bar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--onyx-outline);
+    width: 0%; transition: width 0.05s linear;
+  }
+  .cd-grid {
+    display: grid;
+    grid-template-columns: 250px 1fr 1.25fr;
+    min-height: 480px;
+  }
+
+  /* LEFT — stage list */
+  .cd-side {
+    background: var(--canvas-parchment);
+    border-right: 1px solid rgba(38, 37, 16, 0.08);
+    padding: 18px 12px;
+  }
+  .cd-side-title {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--muted-stone); font-weight: 500;
+    padding: 0 8px; margin-bottom: 10px;
+  }
+  .cd-stage {
+    display: flex; align-items: flex-start; gap: 10px;
+    width: 100%; text-align: left;
+    padding: 10px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    color: var(--inkwell);
+    font-family: var(--font-sans);
+    margin-bottom: 2px;
+  }
+  .cd-stage:hover { background: var(--pebble-gray); }
+  .cd-stage.active {
+    background: var(--pebble-gray);
+    border-color: rgba(38, 37, 16, 0.10);
+  }
+  .cd-stage-icon {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.12);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone);
+    flex: none; margin-top: 1px;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .cd-stage.active .cd-stage-icon {
+    background: var(--inkwell); color: var(--canvas-parchment);
+    border-color: var(--inkwell);
+  }
+  .cd-stage.done .cd-stage-icon {
+    background: var(--chartreuse-alert); color: var(--deep-shadow);
+    border-color: var(--chartreuse-alert);
+  }
+  .cd-stage-name {
+    font-size: 13.5px; font-weight: 500;
+    color: var(--deep-shadow); letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .cd-stage-meta {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); margin-top: 2px;
+    line-height: 1.3;
+  }
+  .cd-stage.active .cd-stage-name { color: var(--deep-shadow); }
+
+  /* MIDDLE — explanation / agent log */
+  .cd-mid {
+    background: var(--canvas-parchment);
+    border-right: 1px solid rgba(38, 37, 16, 0.08);
+    padding: 22px 24px;
+    display: flex; flex-direction: column; gap: 10px;
+    min-width: 0;
+  }
+  .cd-mid-eyebrow {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    color: var(--muted-stone);
+  }
+  .cd-mid-title {
+    font-size: 18px; font-weight: 500;
+    color: var(--deep-shadow); letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .cd-mid-prompt {
+    background: var(--pebble-gray);
+    border-radius: var(--r-sm);
+    padding: 10px 12px;
+    font-size: 13px; color: var(--inkwell);
+    line-height: 1.5;
+  }
+  .cd-mid-thought {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); margin-top: 4px;
+  }
+  .cd-mid-thought .spinner {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.5px solid var(--muted-stone);
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .cd-mid-body {
+    font-size: 13.5px; color: var(--inkwell); line-height: 1.55;
+  }
+  .cd-mid-body p { margin: 0 0 8px; color: inherit; max-width: none; }
+  .cd-mid-body strong { color: var(--deep-shadow); }
+  .cd-mid-files {
+    display: flex; flex-direction: column; gap: 4px;
+    margin-top: 4px;
+  }
+  .cd-mid-file {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--inkwell);
+  }
+  .cd-mid-file .icon-dot {
+    width: 8px; height: 8px; border-radius: 2px;
+    background: var(--onyx-outline);
+  }
+  .cd-mid-file .delta {
+    color: var(--chartreuse-alert); font-weight: 500;
+  }
+  .cd-mid-file .delta-rm { color: #d96868; }
+
+  /* RIGHT — code editor */
+  .cd-code {
+    background: var(--code-bg);
+    display: flex; flex-direction: column;
+    min-width: 0;
+  }
+  .cd-code-tabbar {
+    display: flex; align-items: center;
+    background: var(--code-bg-tab);
+    border-bottom: 1px solid var(--code-line);
+    padding: 0 12px;
+    height: 36px;
+  }
+  .cd-code-tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    font-family: var(--font-mono); font-size: 12px;
+    color: #e8e8e8;
+    background: var(--code-bg);
+    border-right: 1px solid var(--code-line);
+    border-top: 2px solid var(--onyx-outline);
+    margin-bottom: -1px;
+  }
+  .cd-code-tab .x {
+    color: var(--code-muted); font-size: 14px; margin-left: 4px;
+    cursor: default;
+  }
+  .cd-code-meta {
+    margin-left: auto;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--code-muted); padding-right: 4px;
+  }
+  .cd-code-body { position: relative; flex: 1; }
+  .cd-code-pane {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+    overflow: auto;
+  }
+  .cd-code-pane.active {
+    opacity: 1; pointer-events: auto;
+    position: relative; inset: auto;
+  }
+
+  @media (max-width: 1080px) {
+    .cd-grid { grid-template-columns: 220px 1fr 1.1fr; }
+  }
+  @media (max-width: 880px) {
+    .cd-grid { grid-template-columns: 1fr; min-height: 0; }
+    .cd-side { border-right: 0; border-bottom: 1px solid rgba(38, 37, 16, 0.08); }
+    .cd-mid { border-right: 0; border-bottom: 1px solid rgba(38, 37, 16, 0.08); }
+  }
+
+  /* ───────────── Hero sim · compact, no toolbar ───────────── */
+  .hero-sim {
+    background: var(--canvas-parchment);
+    border-radius: 12px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(38, 37, 16, 0.08);
+    overflow: hidden;
+  }
+  .hero-sim .os-titlebar { padding-right: 14px; }
+  .hero-sim-pill {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); letter-spacing: -0.005em;
+  }
+  .hero-sim-pill .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--chartreuse-alert);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18);
+    animation: pulse 1.8s infinite;
+  }
+  .hero-sim-stage {
+    aspect-ratio: 5 / 4;
+  }
+  .hero-sim-hint {
+    position: absolute; top: 14px; left: 18px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); letter-spacing: 0.04em;
+    pointer-events: none;
+    transition: opacity .3s ease;
+  }
+  .hero-sim-hint.fade { opacity: 0; }
+
+  /* ───────────── Online sim · interactive canvas ───────────── */
+  .online-sim {
+    margin-top: 28px;
+    background: var(--canvas-parchment);
+    border-radius: 12px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(38, 37, 16, 0.08);
+    overflow: hidden;
+  }
+  .os-titlebar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: var(--pebble-gray);
+    border-bottom: 1px solid rgba(38, 37, 16, 0.08);
+    position: relative;
+  }
+  .os-titlebar .code-dots i {
+    width: 11px; height: 11px; border-radius: 50%; display: inline-block;
+  }
+  .os-titlebar .code-dots i.r { background: #ff5f57; }
+  .os-titlebar .code-dots i.y { background: #febc2e; }
+  .os-titlebar .code-dots i.g { background: #28c840; }
+  .os-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--muted-stone);
+  }
+  .os-tools {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .os-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono); font-size: 11px;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--canvas-parchment);
+    border: 1px solid rgba(38, 37, 16, 0.10);
+    color: var(--muted-stone);
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .os-btn:hover { border-color: var(--inkwell); color: var(--inkwell); }
+  .os-btn.on {
+    background: var(--inkwell); color: var(--canvas-parchment);
+    border-color: var(--inkwell);
+  }
+  .os-btn .check {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--muted-stone);
+  }
+  .os-btn.on .check { background: var(--chartreuse-alert); }
+
+  .os-stage {
+    position: relative;
+    background:
+      linear-gradient(rgba(38,37,16,0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, rgba(38,37,16,0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+      var(--canvas-parchment);
+    aspect-ratio: 16 / 8;
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  .os-stage.dragging { cursor: grabbing; }
+  .os-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+  }
+  .os-hint {
+    position: absolute; top: 14px; left: 18px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--muted-stone); letter-spacing: 0.04em;
+    pointer-events: none;
+    transition: opacity .3s ease;
+  }
+  .os-hint.fade { opacity: 0; }
+
+  .os-hud {
+    display: grid;
+    grid-template-columns: auto repeat(5, minmax(0, 1fr)) auto;
+    gap: 0;
+    background: var(--code-bg);
+    color: #d4d4d4;
+    font-family: var(--font-mono); font-size: 12px;
+    border-top: 1px solid rgba(38, 37, 16, 0.08);
+  }
+  .os-hud .cell {
+    padding: 12px 16px;
+    border-right: 1px solid var(--code-line);
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 0;
+  }
+  .os-hud .cell:last-child { border-right: 0; }
+  .os-hud .cell .lbl {
+    font-size: 10px; color: var(--code-muted); letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .os-hud .cell .val {
+    font-size: 14px; color: #e8e8e8;
+    font-variant-numeric: tabular-nums;
+  }
+  .os-hud .cell .val.green  { color: var(--chartreuse-alert); }
+  .os-hud .cell .val.amber  { color: #f5b07a; }
+  .os-hud .cell .val.red    { color: #f97583; }
+  .os-hud .cell .val.muted  { color: var(--code-muted); }
+  .os-hud .state-cell {
+    border-right: 1px solid var(--code-line);
+    padding: 12px 18px;
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 130px;
+  }
+  .os-hud .state-cell .name {
+    font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .os-hud .state-cell .name .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 8px; vertical-align: middle;
+  }
+
+  @media (max-width: 880px) {
+    .os-hud { grid-template-columns: 1fr 1fr; }
+    .os-hud .cell, .os-hud .state-cell { border-right: 0; border-bottom: 1px solid var(--code-line); }
+  }
+
+  /* ───────────── Responsive ───────────── */
+  @media (max-width: 1080px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .state-row { grid-template-columns: repeat(5, minmax(150px, 1fr)); overflow-x: auto; }
+  }
+  @media (max-width: 880px) {
+    :root { --section-gap: 64px; }
+    .hero-grid { grid-template-columns: 1fr; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(2) { border-right: 0; }
+    .stat:nth-child(1), .stat:nth-child(2) { border-bottom: 1px solid rgba(38, 37, 16, 0.10); }
+    .dual-arch { grid-template-columns: 1fr; }
+    .video-row { grid-template-columns: 1fr; }
+    .nav ul { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════ NAV ════════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <span class="brand-mark">⌖</span>
+      106A · Drone Convoy
+    </div>
+    <ul>
+      <li><a href="#team">Team</a></li>
+      <li><a href="#motivation">Motivation</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#core">Core code</a></li>
+      <li><a href="#operation">Operation</a></li>
+      <li><a href="#online">Try it</a></li>
+      <li><a href="#demos">Demos</a></li>
+      <li><a href="#failures">Failures</a></li>
+      <li><a href="#future">Future</a></li>
+    </ul>
+    <a class="nav-cta" href="https://github.com/Tyler6666666/106a_final_project.git" target="_blank" rel="noopener">
+      GitHub →
+    </a>
+  </div>
+</nav>
+
+<!-- ════════════ HERO ════════════ -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <!-- left -->
+      <div>
+        <span class="hero-pill"><span class="live-dot"></span> EECS / BioE / ME C106A · Spring 2026 · Final Project</span>
+        <h1 class="title">Autonomous Safe<br/>Drone Convoy<br/>Following.</h1>
+        <p class="hero-sub">
+          A leader–follower drone system. A teleoperated leader carries a target;
+          a Tello follower autonomously locks on with vision and PD control,
+          stays at a strict safe distance, and lands cleanly when the visual
+          lock is lost. Two interchangeable perception backbones, one shared
+          ROS&nbsp;2 controller.
+        </p>
+        <div style="margin-bottom: 22px;">
+          <span class="pill aruco">ArUco · 6-DoF</span>
+          <span class="pill face">YOLOv8 · Face</span>
+          <span class="pill">ROS 2 Humble</span>
+        </div>
+        <div class="cta-row">
+          <a class="btn primary" href="#demos">Watch the demos <span class="arrow">→</span></a>
+          <a class="btn outline" href="#architecture">System architecture</a>
+          <a class="btn ghost" href="https://github.com/Tyler6666666/106a_final_project.git" target="_blank" rel="noopener">GitHub repo</a>
+        </div>
+      </div>
+
+      <!-- right: live drone sim · same logic as #online, no toolbar -->
+      <div class="hero-sim">
+        <div class="os-titlebar">
+          <div class="code-dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+          <span class="os-title">drone_sim · live</span>
+          <div class="hero-sim-pill">
+            <span class="live-dot"></span>FOLLOW · /cmd_vel
+          </div>
+        </div>
+        <div class="os-stage hero-sim-stage" id="hero-sim-stage">
+          <canvas class="os-canvas" id="hero-sim-canvas"></canvas>
+          <div class="hero-sim-hint" id="hero-sim-hint">↓ drag the tag · or just watch</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="num">3</div>
+        <div class="lbl">Live demos</div>
+      </div>
+      <div class="stat">
+        <div class="num">2</div>
+        <div class="lbl">Perception modes</div>
+      </div>
+      <div class="stat">
+        <div class="num">$100</div>
+        <div class="lbl">Drone · self-funded</div>
+      </div>
+      <div class="stat">
+        <div class="num">30 s</div>
+        <div class="lbl">Stable-tracking bar</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<hr class="section-divider" />
+
+<!-- ════════════ TEAM ════════════ -->
+<section id="team">
+  <div class="container">
+    <span class="eyebrow">01 · Team</span>
+    <h2>Four students. Four backgrounds.</h2>
+    <p class="lede">From CS, EECS, and Mechanical Engineering — covering ML/RL, computer vision, manipulation, and UAV systems.</p>
+
+    <div class="grid-4" style="margin-top: 28px;">
+      <div class="team-card">
+        <div class="avatar">MW</div>
+        <span class="role">CS · Cogsci</span>
+        <div class="name">Max Wang</div>
+        <div class="bio">Studies ML and RL methods. Interest in autonomous driving and humanoids.</div>
+      </div>
+      <div class="team-card">
+        <div class="avatar">TZ</div>
+        <span class="role">EECS</span>
+        <div class="name">Tianren (Tyler) Zeng</div>
+        <div class="bio">Computer vision, GPS-free obstacle avoidance, RL for humanoid control.</div>
+      </div>
+      <div class="team-card">
+        <div class="avatar">GJ</div>
+        <span class="role">ME</span>
+        <div class="name">Gia Jeong</div>
+        <div class="bio">Tactile sensing and suction-cup manipulation. Previously: human-following quadruped, autonomous car.</div>
+      </div>
+      <div class="team-card">
+        <div class="avatar">YP</div>
+        <span class="role">EECS</span>
+        <div class="name">Yuanbo (Aaron) Pang</div>
+        <div class="bio">VLA models on whole-body robots. UAV systems work.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ MOTIVATION ════════════ -->
+<section id="motivation">
+  <div class="container">
+    <span class="eyebrow">02 · Motivation</span>
+    <h2>Convoying is mature in cars. Under-exploited for drones.</h2>
+    <div class="grid-2" style="margin-top: 24px;">
+      <div>
+        <p class="lede">
+          In domains where full autonomy is infeasible — inspection, search-and-rescue,
+          warehouse logistics — <strong>convoying</strong> lets one operator command many
+          robots with high precision and lower risk than running each independently.
+          The pattern is well-understood for ground vehicles. It is barely touched for UAVs.
+        </p>
+        <p>
+          We prototype that idea on <strong>compute-constrained UAV hardware</strong>:
+          a $100 self-funded Tello drone with a 720p / 30 fps camera, a base-station
+          laptop running ROS 2 Humble, and a Wi-Fi link doing all the heavy lifting.
+        </p>
+      </div>
+      <div class="card">
+        <div class="icon">⌬</div>
+        <h3>Hardware</h3>
+        <ul class="tight">
+          <li><strong>DJI Tello</strong> · $100 (self-funded)</li>
+          <li><strong>Camera</strong> · 720p, 30 fps</li>
+          <li><strong>Compute</strong> · base-station laptop, perception off-board</li>
+          <li><strong>Network</strong> · Tello UDP RC + H.264 video over Wi-Fi</li>
+          <li><strong>OS</strong> · ROS 2 Humble (Ubuntu 22.04 / WSL on Windows)</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 48px;">Aim · autonomous following with safe failure modes.</h3>
+    <div class="grid-3" style="margin-top: 16px;">
+      <div class="card">
+        <div class="icon">◎</div>
+        <h3>Goal</h3>
+        <p>Stable moderate-speed following using ArUco markers, with safe-landing protocols if the visual lock is lost.</p>
+      </div>
+      <div class="card">
+        <div class="icon">✓</div>
+        <h3>Success bar</h3>
+        <p><strong>30 s of continuous autonomous tracking</strong> — maintaining a safe distance the entire time.</p>
+      </div>
+      <div class="card">
+        <div class="icon">↗</div>
+        <h3>Stretch</h3>
+        <p>Anticipate target acceleration · reacquire after temporary occlusion · extend perception swap to face / person tracking.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ ARCHITECTURE ════════════ -->
+<section id="architecture">
+  <div class="container">
+    <span class="eyebrow">03 · System Architecture</span>
+    <h2>Two perception pipelines. One shared ROS bus.</h2>
+    <p class="lede">
+      Used <strong>ROS 2 Humble</strong> for communication between the base station and
+      the drone. Both modes publish the same <code>Twist</code> command. Only the
+      perception source changes; safety actions stay unified through <code>/tello_action</code>.
+    </p>
+
+    <div class="pipeline" id="pipeline" data-mode="aruco">
+      <div class="pipeline-toolbar">
+        <span class="pipeline-eyebrow">PERCEPTION MODE</span>
+        <button class="pipeline-mode active" data-mode="aruco">
+          <span class="md-dot orange"></span>ArUco
+        </button>
+        <button class="pipeline-mode" data-mode="face">
+          <span class="md-dot green"></span>Face
+        </button>
+        <span class="pipeline-live"><span class="lv-dot"></span>live data flow</span>
+      </div>
+
+      <div class="pipeline-flow">
+        <div class="pipeline-stage" data-stage="camera">
+          <div class="pipeline-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>
+          </div>
+          <div class="pipeline-name">Tello camera</div>
+          <div class="pipeline-meta">720p · 30 fps · H.264 / UDP</div>
+        </div>
+
+        <div class="pipeline-conn">
+          <div class="pipeline-line">
+            <i class="pkt" style="--d: 0s"></i>
+            <i class="pkt" style="--d: -0.7s"></i>
+            <i class="pkt" style="--d: -1.4s"></i>
+          </div>
+          <div class="pipeline-topic">
+            <span class="t">/tello/image_raw</span>
+            <span class="m">sensor_msgs/Image</span>
+          </div>
+        </div>
+
+        <div class="pipeline-stage" data-stage="detector">
+          <div class="pipeline-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
+          </div>
+          <div class="pipeline-name swap" data-aruco="tello_direct_io" data-face="face_detector">tello_direct_io</div>
+          <div class="pipeline-meta swap" data-aruco="cv2.aruco.detectMarkers · solvePnP" data-face="YOLOv8 detector · ReID lock">cv2.aruco.detectMarkers · solvePnP</div>
+        </div>
+
+        <div class="pipeline-conn accent">
+          <div class="pipeline-line">
+            <i class="pkt" style="--d: 0s"></i>
+            <i class="pkt" style="--d: -0.7s"></i>
+            <i class="pkt" style="--d: -1.4s"></i>
+          </div>
+          <div class="pipeline-topic">
+            <span class="t swap" data-aruco="/aruco/pose_3d" data-face="/face/pose">/aruco/pose_3d</span>
+            <span class="m">geometry_msgs/Pose</span>
+          </div>
+        </div>
+
+        <div class="pipeline-stage" data-stage="controller">
+          <div class="pipeline-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>
+          </div>
+          <div class="pipeline-name swap" data-aruco="aruco_controller" data-face="face_controller">aruco_controller</div>
+          <div class="pipeline-meta swap" data-aruco="PD + LPF · 4-axis · target 1.5 m" data-face="image-based servo · face area = depth">PD + LPF · 4-axis · target 1.5 m</div>
+        </div>
+
+        <div class="pipeline-conn">
+          <div class="pipeline-line">
+            <i class="pkt" style="--d: 0s"></i>
+            <i class="pkt" style="--d: -0.7s"></i>
+            <i class="pkt" style="--d: -1.4s"></i>
+          </div>
+          <div class="pipeline-topic">
+            <span class="t">/cmd_vel</span>
+            <span class="m">geometry_msgs/Twist</span>
+          </div>
+        </div>
+
+        <div class="pipeline-stage" data-stage="drone">
+          <div class="pipeline-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 6l6 6m6-6l-6 6m0 0l6 6m-6-6l-6 6"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <div class="pipeline-name">Tello drone</div>
+          <div class="pipeline-meta">RC UDP · port 8889 · motor actuation</div>
+        </div>
+      </div>
+
+      <div class="pipeline-foot">
+        <span><strong>Toggle the mode</strong> — only the perception node and its
+        topic swap. The rest of the pipeline (<code>/cmd_vel</code> → Tello RC) is shared.</span>
+        <span class="pipeline-also"><code>/tello_action</code> — takeoff / land service runs alongside.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ CORE CODE · auto-playing Cursor-style demo ════════════ -->
+<section id="core">
+  <div class="container">
+    <span class="eyebrow">04 · Core code</span>
+    <h2>The full pipeline. Auto-playing.</h2>
+    <p class="lede">
+      From a raw camera frame on the Tello to a Twist command back over Wi-Fi —
+      five stages, one shared bus. The demo cycles automatically. Hover to pause.
+      Click any stage to jump.
+    </p>
+
+    <div class="cursor-desktop" id="cd-root">
+      <div class="cd-titlebar">
+        <div class="code-dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <span class="cd-title">106A · Drone Pipeline</span>
+        <div class="cd-controls">
+          <button class="cd-toggle" id="cd-toggle">
+            <span class="play-dot"></span>
+            <span class="cd-toggle-label">Auto · Playing</span>
+          </button>
+        </div>
+      </div>
+      <div class="cd-progress"><div class="cd-progress-bar" id="cd-bar"></div></div>
+
+      <div class="cd-grid">
+        <!-- LEFT · pipeline stages -->
+        <div class="cd-side" id="cd-side">
+          <div class="cd-side-title">Pipeline · 5 stages</div>
+
+          <button class="cd-stage active" data-stage="aruco-perc">
+            <span class="cd-stage-icon">①</span>
+            <div>
+              <div class="cd-stage-name">ArUco perception</div>
+              <div class="cd-stage-meta">solvePnP · 30 Hz</div>
+            </div>
+          </button>
+          <button class="cd-stage" data-stage="face-perc">
+            <span class="cd-stage-icon">②</span>
+            <div>
+              <div class="cd-stage-name">Face perception</div>
+              <div class="cd-stage-meta">YOLOv8 · ReID</div>
+            </div>
+          </button>
+          <button class="cd-stage" data-stage="aruco-ctrl">
+            <span class="cd-stage-icon">③</span>
+            <div>
+              <div class="cd-stage-name">ArUco controller</div>
+              <div class="cd-stage-meta">PD + LPF · 4-axis</div>
+            </div>
+          </button>
+          <button class="cd-stage" data-stage="face-ctrl">
+            <span class="cd-stage-icon">④</span>
+            <div>
+              <div class="cd-stage-name">Face controller</div>
+              <div class="cd-stage-meta">image-based servo</div>
+            </div>
+          </button>
+          <button class="cd-stage" data-stage="state">
+            <span class="cd-stage-icon">⑤</span>
+            <div>
+              <div class="cd-stage-name">Safety state machine</div>
+              <div class="cd-stage-meta">5 states · auto-land</div>
+            </div>
+          </button>
+        </div>
+
+        <!-- MIDDLE · explanation -->
+        <div class="cd-mid">
+          <span class="cd-mid-eyebrow" id="cd-mid-eyebrow">Stage 01 / 05</span>
+          <h3 class="cd-mid-title" id="cd-mid-title">ArUco perception</h3>
+          <div class="cd-mid-prompt" id="cd-mid-prompt">
+            Detect the printed ArUco marker and turn it into a 6-DoF pose the
+            controller can servo on.
+          </div>
+          <div class="cd-mid-thought">
+            <span class="spinner"></span>
+            <span id="cd-mid-thought">Reading aruco_perception.py · 1.2 s</span>
+          </div>
+          <div class="cd-mid-body" id="cd-mid-body">
+            <p>Run <strong>cv2.aruco.detectMarkers</strong> on every camera frame.
+              When ID 0 is visible, run <strong>solvePnP</strong> with the printed
+              tag size and camera intrinsics — that gives a direct metric translation
+              and rotation.</p>
+            <p>The yaw is extracted from the rotation matrix and packed into the
+              unused <code>orientation.z</code> field so messaging stays cheap.</p>
+          </div>
+          <div class="cd-mid-files" id="cd-mid-files">
+            <div class="cd-mid-file">
+              <span class="icon-dot"></span>
+              <span>aruco_perception.py</span>
+              <span class="delta">+34</span>
+              <span class="delta-rm">−0</span>
+            </div>
+            <div class="cd-mid-file">
+              <span class="icon-dot" style="background: var(--forest-green-action);"></span>
+              <span>tello_direct_io.py</span>
+              <span class="delta">+12</span>
+              <span class="delta-rm">−4</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT · code editor -->
+        <div class="cd-code">
+          <div class="cd-code-tabbar">
+            <div class="cd-code-tab" id="cd-code-tab">
+              <span>aruco_perception.py</span>
+              <span class="x">×</span>
+            </div>
+            <div class="cd-code-meta" id="cd-code-meta">my_drone_vision · perception</div>
+          </div>
+          <div class="cd-code-body" id="cd-code-body">
+
+            <div class="cd-code-pane active" data-pane="aruco-perc">
+<pre class="code"><span class="c-cm"># aruco_perception.py · corners + tag size → solvePnP → 6-DoF pose</span>
+<span class="c-kw">def</span> <span class="c-fn">on_frame</span>(<span class="c-pun">self</span>, frame):
+    corners, ids, _ = cv2.aruco.<span class="c-fn">detectMarkers</span>(frame, <span class="c-pun">self</span>.dict)
+    <span class="c-kw">if</span> ids <span class="c-kw">is</span> <span class="c-kw">None</span>:
+        <span class="c-kw">return</span>                            <span class="c-cm"># tag not visible this frame</span>
+
+    rvec, tvec = cv2.<span class="c-fn">solvePnP</span>(corners, <span class="c-pun">self</span>.tag_size,
+                                  <span class="c-pun">self</span>.K, <span class="c-pun">self</span>.dist)
+
+    pose = <span class="c-fn">Pose</span>()
+    pose.position.x, pose.position.y, pose.position.z = tvec
+    R, _ = cv2.<span class="c-fn">Rodrigues</span>(rvec)
+    pose.orientation.z = math.<span class="c-fn">atan2</span>(
+        -R[<span class="c-num">2</span>,<span class="c-num">0</span>],
+        math.<span class="c-fn">sqrt</span>(R[<span class="c-num">2</span>,<span class="c-num">1</span>]**<span class="c-num">2</span> + R[<span class="c-num">2</span>,<span class="c-num">2</span>]**<span class="c-num">2</span>),
+    )
+    <span class="c-pun">self</span>.pose_pub.<span class="c-fn">publish</span>(pose)            <span class="c-cm"># → /aruco/pose_3d</span></pre>
+            </div>
+
+            <div class="cd-code-pane" data-pane="face-perc">
+<pre class="code"><span class="c-cm"># face_perception.py · YOLOv8 box + ReID → center / area pose</span>
+<span class="c-kw">def</span> <span class="c-fn">on_frame</span>(<span class="c-pun">self</span>, frame):
+    boxes = <span class="c-pun">self</span>.<span class="c-fn">yolo</span>(frame).boxes
+    face  = <span class="c-pun">self</span>.<span class="c-fn">select_target</span>(boxes, <span class="c-pun">self</span>.reid)
+    <span class="c-kw">if</span> face <span class="c-kw">is</span> <span class="c-kw">None</span>:
+        <span class="c-kw">return</span> <span class="c-pun">self</span>.<span class="c-fn">haar_fallback</span>(frame)   <span class="c-cm"># transient YOLO loss</span>
+
+    H, W = frame.shape[:<span class="c-num">2</span>]
+    pose = <span class="c-fn">Pose</span>()
+    pose.position.x = (face.cx - W/<span class="c-num">2</span>) / (W/<span class="c-num">2</span>)   <span class="c-cm"># horizontal err</span>
+    pose.position.y = (face.cy - H/<span class="c-num">2</span>) / (H/<span class="c-num">2</span>)   <span class="c-cm"># vertical err</span>
+    pose.position.z = face.area                  <span class="c-cm"># depth proxy</span>
+
+    <span class="c-pun">self</span>.pose_pub.<span class="c-fn">publish</span>(pose)            <span class="c-cm"># → /face/pose</span></pre>
+            </div>
+
+            <div class="cd-code-pane" data-pane="aruco-ctrl">
+<pre class="code"><span class="c-cm"># aruco_controller.py · metric pose servo</span>
+<span class="c-cm"># e = [−x, z − d_target, −y, −yaw]</span>
+<span class="c-kw">def</span> <span class="c-fn">step</span>(<span class="c-pun">self</span>, pose):
+    x, y, z   = pose.position.x, pose.position.y, pose.position.z
+    yaw_tag   = pose.orientation.z
+
+    vx  = Kp_fwd  * (z - target_dist) + Kd_fwd  * <span class="c-fn">LPF</span>(<span class="c-pun">self</span>.de_fwd)
+    vy  = Kp_side * (-x)              + Kd_side * <span class="c-fn">LPF</span>(<span class="c-pun">self</span>.de_x)
+    vz  = Kp_z    * (-y)              + Kd_z    * <span class="c-fn">LPF</span>(<span class="c-pun">self</span>.de_y)
+    yaw = Kp_yaw  * (-yaw_tag)        + Kd_yaw  * <span class="c-fn">LPF</span>(<span class="c-pun">self</span>.de_yaw)
+
+    <span class="c-cm"># EMA smoothing α = 0.4 · RC clamps 12 / 18 / 12 / 25</span>
+    <span class="c-pun">self</span>.<span class="c-fn">publish_twist</span>(<span class="c-fn">clamp</span>(vx, vy, vz, yaw))</pre>
+            </div>
+
+            <div class="cd-code-pane" data-pane="face-ctrl">
+<pre class="code"><span class="c-cm"># face_controller.py · image-based servo</span>
+<span class="c-cm"># e = [x_center, y_center, A_target − A_face]</span>
+<span class="c-kw">def</span> <span class="c-fn">step</span>(<span class="c-pun">self</span>, pose):
+    err_x    = pose.position.x                  <span class="c-cm"># normalized [-1, 1]</span>
+    err_y    = pose.position.y
+    err_area = target_area - pose.position.z    <span class="c-cm"># depth proxy</span>
+
+    yaw = Kp_yaw * err_x    + Kd_yaw * <span class="c-fn">LPF</span>(<span class="c-pun">self</span>.de_x)
+    vz  = Kp_z   * (-err_y) + Kd_z   * <span class="c-fn">LPF</span>(<span class="c-pun">self</span>.de_y)
+    vx  = Kp_fwd * err_area + Kd_fwd * <span class="c-fn">LPF</span>(<span class="c-pun">self</span>.de_area)
+
+    <span class="c-cm"># Holds head near image center · ~1.5 m social distance</span>
+    <span class="c-pun">self</span>.<span class="c-fn">publish_twist</span>(<span class="c-fn">clamp</span>(vx, <span class="c-num">0.0</span>, vz, yaw))</pre>
+            </div>
+
+            <div class="cd-code-pane" data-pane="state">
+<pre class="code"><span class="c-cm"># state_machine.py · 5-state safety machine</span>
+<span class="c-kw">def</span> <span class="c-fn">step</span>(<span class="c-pun">self</span>, pose, dt):
+    <span class="c-kw">if</span>   <span class="c-pun">self</span>.state == IDLE:
+        <span class="c-kw">if</span> pose <span class="c-kw">and</span> <span class="c-pun">self</span>.<span class="c-fn">tag_seen_for</span>(<span class="c-num">2.0</span>):
+            <span class="c-pun">self</span>.state = ARM
+            <span class="c-pun">self</span>.<span class="c-fn">takeoff</span>()                  <span class="c-cm"># → /tello_action</span>
+
+    <span class="c-kw">elif</span> <span class="c-pun">self</span>.state == FOLLOW:
+        <span class="c-kw">if</span> pose <span class="c-kw">is</span> <span class="c-kw">None</span>:
+            <span class="c-pun">self</span>.lost_t += dt
+            <span class="c-kw">if</span> <span class="c-pun">self</span>.lost_t > <span class="c-num">0.5</span>:
+                <span class="c-pun">self</span>.state = SEARCH
+        <span class="c-kw">else</span>:
+            <span class="c-pun">self</span>.lost_t = <span class="c-num">0.0</span>
+            <span class="c-pun">self</span>.controller.<span class="c-fn">step</span>(pose)        <span class="c-cm"># PD + LPF</span>
+
+    <span class="c-kw">elif</span> <span class="c-pun">self</span>.state == SEARCH:
+        <span class="c-pun">self</span>.<span class="c-fn">yaw_scan</span>()
+        <span class="c-kw">if</span>   pose:               <span class="c-pun">self</span>.state = FOLLOW
+        <span class="c-kw">elif</span> <span class="c-pun">self</span>.lost_t > <span class="c-num">5.0</span>: <span class="c-pun">self</span>.state = LAND
+
+    <span class="c-kw">elif</span> <span class="c-pun">self</span>.state == LAND:
+        <span class="c-pun">self</span>.<span class="c-fn">soft_land</span>()                    <span class="c-cm"># → /tello_action</span></pre>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ OPERATION ════════════ -->
+<section id="operation">
+  <div class="container">
+    <span class="eyebrow">05 · Operation</span>
+    <h2>Five-state safety machine.</h2>
+    <p class="lede">
+      The leader takes off and is teleoperated. The follower confirms the tag, takes
+      off, locks at safe distance, copies the leader's velocity, recovers if the tag
+      is lost briefly, and lands cleanly on long loss.
+    </p>
+
+    <div class="state-row">
+      <div class="state idle">
+        <div class="num">01 · IDLE</div>
+        <div class="name"><span class="name-dot"></span>Idle</div>
+        <div class="desc">Disarmed. Waiting for tag &amp; takeoff.</div>
+      </div>
+      <div class="state arm">
+        <div class="num">02 · ARM</div>
+        <div class="name"><span class="name-dot"></span>Arm</div>
+        <div class="desc">Stable tag for ~2 s. Auto-takeoff.</div>
+      </div>
+      <div class="state fol">
+        <div class="num">03 · FOLLOW</div>
+        <div class="name"><span class="name-dot"></span>Follow</div>
+        <div class="desc">Track the tag at safe distance.</div>
+      </div>
+      <div class="state sea">
+        <div class="num">04 · SEARCH</div>
+        <div class="name"><span class="name-dot"></span>Search</div>
+        <div class="desc">Tag lost &lt; 2 s. Hover, yaw scan, retry.</div>
+      </div>
+      <div class="state lan">
+        <div class="num">05 · LAND</div>
+        <div class="name"><span class="name-dot"></span>Land</div>
+        <div class="desc">Tag lost &gt; 5 s. Soft-land. Disarm.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ ONLINE SIM · interactive in-browser ════════════ -->
+<section id="online">
+  <div class="container">
+    <span class="eyebrow">06 · Try it online</span>
+    <h2>Drag the AR tag. The drone follows.</h2>
+    <p class="lede">
+      The same PD + low-pass filter and 5-state safety machine as the real
+      project, running in your browser. Drag the marker around — or leave it
+      idle and it'll auto-orbit on a Lissajous figure-eight, just like
+      <code>marker_move.py</code> in the Gazebo sim.
+    </p>
+
+    <div class="online-sim" id="os-root">
+      <div class="os-titlebar">
+        <div class="code-dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <span class="os-title">drone_sim · localhost:webgl</span>
+        <div class="os-tools">
+          <button class="os-btn on"  id="os-orbit"><span class="check"></span>Auto-orbit</button>
+          <button class="os-btn on"  id="os-vec"><span class="check"></span>Show vectors</button>
+          <button class="os-btn on"  id="os-ring"><span class="check"></span>Safe ring</button>
+          <button class="os-btn"     id="os-hide"><span class="check"></span>Hide tag</button>
+          <button class="os-btn"     id="os-reset">↻ Reset</button>
+        </div>
+      </div>
+
+      <div class="os-stage" id="os-stage">
+        <canvas class="os-canvas" id="os-canvas"></canvas>
+        <div class="os-hint" id="os-hint">↓ drag the tag · or just watch</div>
+      </div>
+
+      <div class="os-hud">
+        <div class="state-cell">
+          <div class="lbl">State</div>
+          <div class="name" id="os-state-name"><span class="dot" id="os-state-dot"></span>FOLLOW</div>
+        </div>
+        <div class="cell"><div class="lbl">vx · forward</div><div class="val" id="os-vx">+0.00</div></div>
+        <div class="cell"><div class="lbl">vy · side</div><div class="val" id="os-vy">+0.00</div></div>
+        <div class="cell"><div class="lbl">yaw</div><div class="val" id="os-yaw">+0.00</div></div>
+        <div class="cell"><div class="lbl">Δ distance</div><div class="val" id="os-dist">0.00 m</div></div>
+        <div class="cell"><div class="lbl">tag-loss</div><div class="val muted" id="os-loss">0.0 s</div></div>
+        <div class="cell"><div class="lbl">topic</div><div class="val muted">/cmd_vel</div></div>
+      </div>
+    </div>
+
+    <!-- Real Gazebo recording — same logic, real renderer -->
+    <div class="demo-block" style="margin-top: 36px;">
+      <span class="demo-tag"><span class="live-dot"></span>Reference · same logic in Gazebo</span>
+      <h3>The same controller running inside ROS 2 + Gazebo.</h3>
+      <p>The browser sim above is the toy version. This is the actual project running
+         in Gazebo Classic 11 — same PD + LPF, same state machine, same
+         <code>/cmd_vel</code> topic — driving the simulated Tello against a real
+         <code>marker_move.py</code> Lissajous trajectory.</p>
+      <div class="video-card">
+        <div class="video-header">
+          <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+          <span class="filename">ros-sim.mp4</span>
+        </div>
+        <video src="videos/ros-sim.mp4"
+               controls muted loop playsinline preload="metadata">
+          Your browser does not support HTML5 video.
+        </video>
+      </div>
+      <div class="video-meta">
+        <span><strong>Source:</strong> Gazebo Classic 11 · simulated Tello camera</span>
+        <span><strong>Tracking topic:</strong> <code>/aruco/pose_3d</code> → <code>/drone1/cmd_vel</code></span>
+        <span><strong>Trajectory:</strong> spatial figure-eight (Lissajous 1:2)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ DEMOS ════════════ -->
+<section id="demos">
+  <div class="container">
+    <span class="eyebrow">07 · Live Demos</span>
+    <h2>Three demos. One code path.</h2>
+    <p class="lede">
+      Same perception → estimation → control loop, three different deployments.
+     
+    </p>
+
+    <!-- Demo 1 -->
+    <div class="demo-block">
+      <span class="demo-tag"><span class="live-dot"></span>Demo 01 · Sim · Checkpoint 1</span>
+      <h3>Gazebo simulation.</h3>
+      <p>Before any real flight we validated the entire pipeline inside ROS 2 + Gazebo
+         Classic 11. Same nodes, same topics, simulated pixels.</p>
+      <div class="video-card">
+        <div class="video-header">
+          <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+          <span class="filename">ros-sim.mp4</span>
+        </div>
+        <video src="videos/ros-sim.mp4"
+               controls muted loop playsinline preload="metadata">
+          Your browser does not support HTML5 video.
+        </video>
+      </div>
+      <div class="video-meta">
+        <span><strong>Source:</strong> Gazebo Classic 11 · simulated Tello camera</span>
+        <span><strong>Tracking topic:</strong> <code>/aruco/pose_3d</code> → <code>/drone1/cmd_vel</code></span>
+        <span><strong>Trajectory:</strong> spatial figure-eight (Lissajous 1:2)</span>
+      </div>
+    </div>
+
+    <!-- Demo 2 -->
+    <div class="demo-block">
+      <span class="demo-tag"><span class="live-dot"></span>Demo 02 · Real ArUco · Checkpoint 2</span>
+      <h3>Real Tello tracking an ArUco tag.</h3>
+      <p>Same code path in the real world. Wi-Fi latency, frame drops, and lighting
+         noise all show up. The drone confirms the tag, takes off, and holds the safe
+         distance through the leader's translations.</p>
+      <div class="video-row">
+        <div class="video-card">
+          <div class="video-header">
+            <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+            <span class="filename">cp_demo_a.mp4</span>
+          </div>
+          <video src="videos/cp_demo_a.mp4"
+                 poster="106a_final_project/demo/posters/cp2-real-aruco-1_3x.jpg"
+                 controls muted loop playsinline preload="metadata">
+          </video>
+        </div>
+        <div class="video-card">
+          <div class="video-header">
+            <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+            <span class="filename">cp_demo_b.mp4</span>
+          </div>
+          <video src="videos/cp_demo_b.mp4"
+                 poster="106a_final_project/demo/posters/cp2-real-aruco-2_3x.jpg"
+                 controls muted loop playsinline preload="metadata">
+          </video>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo 3 -->
+    <div class="demo-block">
+      <span class="demo-tag"><span class="live-dot"></span>Demo 03 · Face · Stretch</span>
+      <h3>Human (face) tracking.</h3>
+      <p>We swap the ArUco detector for YOLOv8. The drone waits for a stable face,
+         takes off automatically, holds the head near image center at ~1.5 m social
+         distance, and lands on prolonged loss.
+         <strong>Same control law, same state machine — only perception changes.</strong></p>
+      <div class="video-row">
+        <div class="video-card">
+          <div class="video-header">
+            <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+            <span class="filename">cp_face_a.mp4</span>
+          </div>
+          <video src="videos/cp_face_a.mp4"
+                 poster="106a_final_project/demo/posters/cp_face_a_3x.jpg"
+                 controls muted loop playsinline preload="metadata">
+          </video>
+        </div>
+        <div class="video-card">
+          <div class="video-header">
+            <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+            <span class="filename">cp_face_b.mp4</span>
+          </div>
+          <video src="videos/cp_face_b.mp4"
+                 poster="106a_final_project/demo/posters/cp_face_b_3x.jpg"
+                 controls muted loop playsinline preload="metadata">
+          </video>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ FAILURES ════════════ -->
+<section id="failures">
+  <div class="container">
+    <span class="eyebrow">08 · Failures &amp; Mitigations</span>
+    <h2>Six issues we hit — and the fixes that ship.</h2>
+
+    <div class="grid-3" style="margin-top: 24px;">
+      <div class="issue-card">
+        <span class="num">▲ 01</span>
+        <span class="head">Wi-Fi drops &amp; network in VMs</span>
+        <span class="fix">Controlled timeout for Wi-Fi instability; switched from
+          Docker (system-agnostic) to <strong>WSL on Windows</strong> so the Tello UDP
+          socket maps directly through the host.</span>
+      </div>
+      <div class="issue-card">
+        <span class="num">▲ 02</span>
+        <span class="head">ArUco pose flicker</span>
+        <span class="fix">EMA smoothing filter on the translation component of the pose.</span>
+      </div>
+      <div class="issue-card">
+        <span class="num">▲ 03</span>
+        <span class="head">Sudden tracking errors</span>
+        <span class="fix">PD control with a low-pass filter cleans up noisy pose
+          estimates before they reach the actuator.</span>
+      </div>
+      <div class="issue-card">
+        <span class="num">▲ 04</span>
+        <span class="head">Half-second occlusions</span>
+        <span class="fix">Search state machine: hover, yaw-scan, retry, fall through
+          to safe-landing if the scan exhausts.</span>
+      </div>
+      <div class="issue-card">
+        <span class="num">▲ 05</span>
+        <span class="head">Multi-node Tello IO latency</span>
+        <span class="fix">Single owner pattern — one
+          <code>tello_direct_io_node</code> wraps the DJI Tello packages and handles
+          everything end-to-end.</span>
+      </div>
+      <div class="issue-card">
+        <span class="num">▲ 06</span>
+        <span class="head">Inconsistent video stream</span>
+        <span class="fix">Smoothed video quality through Tekko frame handling, and
+          moved detection in-process to remove the ROS-image round trip.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ FUTURE ════════════ -->
+<section id="future">
+  <div class="container">
+    <span class="eyebrow">09 · Future Plans</span>
+    <h2>Four directions we want to take this.</h2>
+
+    <div class="grid-4" style="margin-top: 24px;">
+      <div class="future-card">
+        <span class="num">→ 01</span>
+        <span class="head">Voice-selectable tracking</span>
+        <span class="desc">A multimodal operator command to switch between tracking
+          modes — ArUco, face, or full-person. Voice frees the operator's hands during a demo.</span>
+      </div>
+      <div class="future-card">
+        <span class="num">→ 02</span>
+        <span class="head">Multi-follower formation</span>
+        <span class="desc">Use shared TF frames so multiple drones maintain formation
+          offsets from the leader instead of all targeting the same point.</span>
+      </div>
+      <div class="future-card">
+        <span class="num">→ 03</span>
+        <span class="head">Mental-mapping replay</span>
+        <span class="desc">The follower remembers another drone's path and replays
+          it later with obstacle awareness.</span>
+      </div>
+      <div class="future-card">
+        <span class="num">→ 04</span>
+        <span class="head">Onboard inference</span>
+        <span class="desc">Move perception to a Jetson companion to cut Wi-Fi latency
+          and drop the base-station dependency.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ HARDWARE BRIDGES ════════════ -->
+<section id="hardware">
+  <div class="container">
+    <span class="eyebrow">10 · Real-hardware bridges</span>
+    <h2>Two utility scripts that target the physical Tello.</h2>
+    <div class="grid-2" style="margin-top: 24px;">
+      <div class="card">
+        <div class="icon">≋</div>
+        <h3><code>tello-station.sh</code></h3>
+        <p>One-shot helper that switches the Tello from its default AP mode into
+          <strong>station mode</strong>, joining a target Wi-Fi (e.g. a phone hotspot).
+          Verifies the Mac is on the <code>TELLO-XXXXXX</code> hotspot, pings the drone,
+          sends <code>command</code> / <code>battery?</code> /
+          <code>ap &lt;ssid&gt; &lt;pass&gt;</code> over UDP 8889.
+          Refuses to run below 25 % battery.</p>
+      </div>
+      <div class="card">
+        <div class="icon">▦</div>
+        <h3><code>tt_show_aruco.py</code></h3>
+        <p>Renders a real ArUco marker directly onto the RoboMaster TT's
+          <strong>top 8×8 LED matrix</strong>. A TT can literally carry its own ArUco
+          for another drone to track — physical equivalent of the moving marker in the
+          simulation demo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ QUICKSTART ════════════ -->
+<section id="run">
+  <div class="container">
+    <span class="eyebrow">11 · Quickstart</span>
+    <h2>How to run it.</h2>
+    <p class="lede">
+      Requires Ubuntu 22.04 (or WSL 2 on Windows) + ROS 2 Humble + Gazebo Classic 11.
+      Every fresh terminal must source the workspace.
+    </p>
+
+    <div class="code-panel code-window" data-code-group="run">
+      <div class="code-window-header">
+        <div class="code-dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <div class="code-tabs">
+          <button class="code-tab active" data-tab="run-build">
+            <span class="dot"></span>① build.sh
+          </button>
+          <button class="code-tab" data-tab="run-sim">
+            <span class="dot"></span>② sim.sh
+          </button>
+          <button class="code-tab" data-tab="run-real-aruco">
+            <span class="dot"></span>③ real_aruco.sh
+          </button>
+          <button class="code-tab" data-tab="run-face">
+            <span class="dot"></span>④ face.sh
+          </button>
+        </div>
+        <div class="code-meta">$ bash</div>
+      </div>
+      <div class="code-body">
+        <button class="code-copy" data-copy="run-build">Copy</button>
+        <div class="code-pane active" id="run-build">
+<pre class="code"><span class="c-cm"># ① Build the workspace</span>
+<span class="c-fn">cd</span> ~/ros2_ws/106a_final_project/drone_simulation
+<span class="c-fn">source</span> /opt/ros/humble/setup.bash
+colcon build</pre>
+        </div>
+        <div class="code-pane" id="run-sim">
+<pre class="code"><span class="c-cm"># ② Sim path · launch Gazebo + simulated Tello</span>
+<span class="c-fn">source</span> install/setup.bash
+ros2 launch tello_gazebo simple_launch.py
+
+<span class="c-cm"># second terminal · perception + control</span>
+ros2 launch my_drone_vision vision_control.launch.py
+
+<span class="c-cm"># third terminal · marker trajectory</span>
+python3 marker_move.py</pre>
+        </div>
+        <div class="code-pane" id="run-real-aruco">
+<pre class="code"><span class="c-cm"># ③ Real path · ArUco follow on a Tello</span>
+<span class="c-cm"># put Tello onto the local Wi-Fi (one-shot)</span>
+./tello-station.sh
+
+<span class="c-cm"># launch the I/O + controller node pair</span>
+ros2 launch my_drone_vision tello_aruco.launch.py</pre>
+        </div>
+        <div class="code-pane" id="run-face">
+<pre class="code"><span class="c-cm"># ④ Real path · face follow</span>
+ros2 launch my_drone_vision tello_face.launch.py
+<span class="c-cm"># YOLOv8 weights are downloaded the first time</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 36px;">Common gotchas</h3>
+    <div class="grid-3" style="margin-top: 12px;">
+      <div class="card">
+        <div class="icon">!</div>
+        <h3>Address already in use</h3>
+        <p>A leftover Gazebo process is still bound:<br/>
+          <code>pkill -f "gazebo|gzserver|gzclient"</code></p>
+      </div>
+      <div class="card">
+        <div class="icon">↕</div>
+        <h3>Marker won't move on z</h3>
+        <p>Gazebo is using an old model with <code>planar_move</code>. Restart Gazebo
+          and confirm the model comes from this repo.</p>
+      </div>
+      <div class="card">
+        <div class="icon">×</div>
+        <h3>No marker / face detected</h3>
+        <p>Check the camera topic has data, and that the perception node was started
+          after sourcing <code>install/setup.bash</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer>
+  <div class="container">
+    <div style="font-weight: 500; color: var(--inkwell);">EE/CS 106A · Spring 2026 · Final Project</div>
+    <div style="margin-top: 6px;">Autonomous Safe Drone Convoy Following</div>
+    <div class="small" style="margin-top: 14px;">
+      Static single-page site · open <code style="font-family: var(--font-mono); background: var(--pebble-gray); padding: 1px 6px; border-radius: 3px;">index.html</code> directly in any browser.
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ───────────── Cursor-Desktop · auto-playing core demo ─────────────
+  (function () {
+    const root = document.getElementById('cd-root');
+    if (!root) return;
+
+    const STAGES = [
+      {
+        id: 'aruco-perc',
+        eyebrow: 'Stage 01 / 05 · Perception',
+        title: 'ArUco perception',
+        prompt: 'Detect the printed ArUco marker and turn it into a 6-DoF pose the controller can servo on.',
+        thought: 'Reading aruco_perception.py · 1.2 s',
+        body:
+          '<p>Run <strong>cv2.aruco.detectMarkers</strong> on every camera frame. ' +
+          'When ID 0 is visible, run <strong>solvePnP</strong> with the printed tag size and ' +
+          'camera intrinsics — that gives a direct metric translation and rotation.</p>' +
+          '<p>The yaw is extracted from the rotation matrix and packed into the unused ' +
+          '<code>orientation.z</code> field so messaging stays cheap.</p>',
+        files: [
+          { name: 'aruco_perception.py', plus: '+34', minus: '−0', color: 'var(--onyx-outline)' },
+          { name: 'tello_direct_io.py',  plus: '+12', minus: '−4', color: 'var(--forest-green-action)' },
+        ],
+        codeTab: 'aruco_perception.py',
+        codeMeta: 'my_drone_vision · perception',
+      },
+      {
+        id: 'face-perc',
+        eyebrow: 'Stage 02 / 05 · Perception',
+        title: 'Face perception',
+        prompt: 'Swap the marker detector for YOLOv8 + ReID. Same Pose message, different signal.',
+        thought: 'Reading face_perception.py · 0.9 s',
+        body:
+          '<p>Run <strong>YOLOv8</strong> on every frame, then <strong>ReID</strong> picks the same ' +
+          'person out of multiple faces (locks identity at first detection).</p>' +
+          '<p>Output is a <em>pose-like</em> message: normalized image-center error in x/y, and the ' +
+          'face <strong>area</strong> packed into <code>z</code> as a depth proxy.</p>',
+        files: [
+          { name: 'face_perception.py', plus: '+41', minus: '−0', color: 'var(--onyx-outline)' },
+          { name: 'reid_tracker.py',    plus: '+18', minus: '−2', color: 'var(--forest-green-action)' },
+        ],
+        codeTab: 'face_perception.py',
+        codeMeta: 'my_drone_vision · perception',
+      },
+      {
+        id: 'aruco-ctrl',
+        eyebrow: 'Stage 03 / 05 · Control',
+        title: 'ArUco · 4-axis PD servo',
+        prompt: 'Convert the metric pose into a body-frame Twist command. PD + low-pass filter.',
+        thought: 'Reading aruco_controller.py · 1.4 s',
+        body:
+          '<p>Four independent PD loops on <strong>forward, side, vertical, yaw</strong>. ' +
+          'EMA smoothing α = 0.4 · RC clamps 12 / 18 / 12 / 25.</p>' +
+          '<p>Tag confirmed for 5 s → auto-takeoff. Auto-land on tag loss > 5 s.</p>',
+        files: [
+          { name: 'aruco_controller.py', plus: '+62', minus: '−5', color: 'var(--onyx-outline)' },
+          { name: 'pd_filter.py',        plus: '+24', minus: '−0', color: 'var(--forest-green-action)' },
+        ],
+        codeTab: 'aruco_controller.py',
+        codeMeta: 'my_drone_vision · 4-axis PD servo',
+      },
+      {
+        id: 'face-ctrl',
+        eyebrow: 'Stage 04 / 05 · Control',
+        title: 'Face · image-based servo',
+        prompt: 'Same PD structure. Error signal is now image-center offset + face-area depth proxy.',
+        thought: 'Reading face_controller.py · 1.0 s',
+        body:
+          '<p>Yaw and vertical from <strong>image-center error</strong>. Forward motion from ' +
+          '<strong>face area</strong> (smaller = farther, larger = closer).</p>' +
+          '<p>Holds the head near image center at ~1.5 m social distance. Auto-land on prolonged loss.</p>',
+        files: [
+          { name: 'face_controller.py', plus: '+48', minus: '−6', color: 'var(--onyx-outline)' },
+          { name: 'pd_filter.py',       plus: '+0',  minus: '−0', color: 'var(--forest-green-action)' },
+        ],
+        codeTab: 'face_controller.py',
+        codeMeta: 'my_drone_vision · image-based servo',
+      },
+      {
+        id: 'state',
+        eyebrow: 'Stage 05 / 05 · Safety',
+        title: 'Safety state machine',
+        prompt: 'Five states wrap the controller. Loss recovery, soft-land, auto-takeoff — all here.',
+        thought: 'Reading state_machine.py · 1.1 s',
+        body:
+          '<p><strong>Idle → Arm → Follow → Search → Land.</strong> The state machine never lets ' +
+          'the controller fly blind: tag lost > 0.5 s drops to <em>search</em>, > 5 s lands cleanly.</p>' +
+          '<p>The <em>same</em> state machine wraps both ArUco and face controllers — only the perception input changes.</p>',
+        files: [
+          { name: 'state_machine.py', plus: '+71', minus: '−12', color: 'var(--onyx-outline)' },
+          { name: 'tello_action.py',  plus: '+9',  minus: '−1',  color: 'var(--forest-green-action)' },
+        ],
+        codeTab: 'state_machine.py',
+        codeMeta: 'my_drone_vision · safety wrapper',
+      },
+    ];
+
+    const TICK_MS = 50;
+    const DURATION = 7000;
+    const RESUME_AFTER = 6000;
+
+    const sideEl     = document.getElementById('cd-side');
+    const stageBtns  = sideEl.querySelectorAll('.cd-stage');
+    const barEl      = document.getElementById('cd-bar');
+    const eyebrowEl  = document.getElementById('cd-mid-eyebrow');
+    const titleEl    = document.getElementById('cd-mid-title');
+    const promptEl   = document.getElementById('cd-mid-prompt');
+    const thoughtEl  = document.getElementById('cd-mid-thought');
+    const bodyEl     = document.getElementById('cd-mid-body');
+    const filesEl    = document.getElementById('cd-mid-files');
+    const codeTabEl  = document.getElementById('cd-code-tab');
+    const codeMetaEl = document.getElementById('cd-code-meta');
+    const codePanes  = root.querySelectorAll('.cd-code-pane');
+    const toggleBtn  = document.getElementById('cd-toggle');
+    const toggleLbl  = toggleBtn.querySelector('.cd-toggle-label');
+
+    let idx = 0;
+    let elapsed = 0;
+    let userPaused = false;
+    let suspendUntil = 0;
+    let hovering = false;
+    let inView = true;
+
+    function activate(i) {
+      idx = i;
+      elapsed = 0;
+      const s = STAGES[i];
+
+      stageBtns.forEach((btn, j) => {
+        btn.classList.toggle('active', j === i);
+        btn.classList.toggle('done', j < i);
+      });
+
+      eyebrowEl.textContent = s.eyebrow;
+      titleEl.textContent   = s.title;
+      promptEl.textContent  = s.prompt;
+      thoughtEl.textContent = s.thought;
+      bodyEl.innerHTML      = s.body;
+      filesEl.innerHTML = s.files.map(f =>
+        '<div class="cd-mid-file">' +
+          '<span class="icon-dot" style="background:' + f.color + ';"></span>' +
+          '<span>' + f.name + '</span>' +
+          '<span class="delta">' + f.plus + '</span>' +
+          '<span class="delta-rm">' + f.minus + '</span>' +
+        '</div>'
+      ).join('');
+
+      codeTabEl.querySelector('span:first-child').textContent = s.codeTab;
+      codeMetaEl.textContent = s.codeMeta;
+      codePanes.forEach(p => p.classList.toggle('active', p.dataset.pane === s.id));
+
+      barEl.style.width = '0%';
+    }
+
+    function setPlaying(playing) {
+      userPaused = !playing;
+      toggleBtn.classList.toggle('paused', !playing);
+      toggleLbl.textContent = playing ? 'Auto · Playing' : 'Paused';
+    }
+
+    setInterval(() => {
+      const now = Date.now();
+      const softPaused = hovering || now < suspendUntil || !inView;
+      if (userPaused || softPaused) return;
+
+      elapsed += TICK_MS;
+      if (elapsed >= DURATION) {
+        activate((idx + 1) % STAGES.length);
+      } else {
+        barEl.style.width = (elapsed / DURATION * 100).toFixed(2) + '%';
+      }
+    }, TICK_MS);
+
+    stageBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.stage;
+        const i = STAGES.findIndex(s => s.id === target);
+        if (i < 0) return;
+        activate(i);
+        suspendUntil = Date.now() + RESUME_AFTER;
+      });
+    });
+
+    root.addEventListener('mouseenter', () => { hovering = true; });
+    root.addEventListener('mouseleave', () => { hovering = false; });
+
+    toggleBtn.addEventListener('click', () => {
+      setPlaying(userPaused);
+      if (!userPaused) suspendUntil = 0;
+    });
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        inView = entries[0].isIntersecting;
+      }, { threshold: 0.15 });
+      io.observe(root);
+    }
+
+    activate(0);
+  })();
+
+  // Tab switching for all code-window groups
+  document.querySelectorAll('.code-window').forEach(win => {
+    const tabs  = win.querySelectorAll('.code-tab');
+    const panes = win.querySelectorAll('.code-pane');
+    const copy  = win.querySelector('.code-copy');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.tab;
+        tabs.forEach(t => t.classList.toggle('active', t === tab));
+        panes.forEach(p => p.classList.toggle('active', p.id === target));
+        if (copy) copy.dataset.copy = target;
+      });
+    });
+
+    if (copy) {
+      copy.addEventListener('click', async () => {
+        const target = copy.dataset.copy;
+        const pane = win.querySelector('#' + target + ' pre');
+        if (!pane) return;
+        try {
+          await navigator.clipboard.writeText(pane.innerText);
+          const orig = copy.textContent;
+          copy.textContent = '✓ Copied';
+          copy.classList.add('copied');
+          setTimeout(() => {
+            copy.textContent = orig;
+            copy.classList.remove('copied');
+          }, 1400);
+        } catch {}
+      });
+    }
+  });
+
+  // Optional: section highlighting on scroll for nav (lightweight)
+  const navLinks = document.querySelectorAll('.nav ul a');
+  const sections = Array.from(navLinks).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const onScroll = () => {
+    const y = window.scrollY + 120;
+    let active = sections[0];
+    for (const s of sections) { if (s.offsetTop <= y) active = s; }
+    navLinks.forEach(a => {
+      const match = a.getAttribute('href') === '#' + (active && active.id);
+      a.style.color = match ? 'var(--inkwell)' : '';
+    });
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // ───────────── Online sim · interactive AR-tag follower ─────────────
+  (function () {
+    const root   = document.getElementById('os-root');
+    if (!root) return;
+    const stage  = document.getElementById('os-stage');
+    const cv     = document.getElementById('os-canvas');
+    const hint   = document.getElementById('os-hint');
+
+    const btnOrbit = document.getElementById('os-orbit');
+    const btnVec   = document.getElementById('os-vec');
+    const btnRing  = document.getElementById('os-ring');
+    const btnHide  = document.getElementById('os-hide');
+    const btnReset = document.getElementById('os-reset');
+
+    const elState = document.getElementById('os-state-name');
+    const elDot   = document.getElementById('os-state-dot');
+    const elVx    = document.getElementById('os-vx');
+    const elVy    = document.getElementById('os-vy');
+    const elYaw   = document.getElementById('os-yaw');
+    const elDist  = document.getElementById('os-dist');
+    const elLoss  = document.getElementById('os-loss');
+
+    const ctx = cv.getContext('2d');
+
+    // ── world / view ──────────────────────────────────────────────
+    let W = 1200, H = 600, dpr = 1;
+    function resize() {
+      const r = stage.getBoundingClientRect();
+      dpr = window.devicePixelRatio || 1;
+      W = r.width; H = r.height;
+      cv.width  = W * dpr;
+      cv.height = H * dpr;
+      cv.style.width  = W + 'px';
+      cv.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    // ── PARAMS · mirror project values ────────────────────────────
+    // Pixel scale: 100 px = 1 m (so target_dist = 1.5 m → 150 px)
+    const TARGET_DIST = 150;
+    const Kp_fwd = 0.020, Kd_fwd = 0.18;
+    const Kp_side = 0.025, Kd_side = 0.18;
+    const Kp_yaw = 1.4,    Kd_yaw  = 0.4;
+    const ALPHA  = 0.4;                      // EMA · LPF strength
+    const MAX_V  = 320;                      // px/s clamp
+    const MAX_W  = 2.0;                      // rad/s yaw clamp
+    const ARM_T  = 1.5;                      // s of stable tag → ARM
+    const SEARCH_T = 0.8;                    // s of loss → SEARCH
+    const LAND_T   = 4.0;                    // s of loss → LAND
+
+    // ── state ─────────────────────────────────────────────────────
+    let marker, drone, lpf_fwd, lpf_side, lpf_yaw,
+        prev_e_fwd, prev_e_side, prev_e_yaw,
+        state, lostT, armT, t,
+        orbitT, lastInteract, hideTag, autoOrbit, showVec, showRing;
+
+    function reset() {
+      marker = { x: W * 0.65, y: H * 0.45 };
+      drone  = { x: W * 0.30, y: H * 0.55, yaw: 0, vx: 0, vy: 0, w: 0 };
+      lpf_fwd = lpf_side = lpf_yaw = 0;
+      prev_e_fwd = prev_e_side = prev_e_yaw = 0;
+      state = 'IDLE'; lostT = 0; armT = 0; t = 0; orbitT = 0;
+      lastInteract = performance.now();
+    }
+
+    autoOrbit = true; showVec = true; showRing = true; hideTag = false;
+    reset();
+
+    // ── controls ──────────────────────────────────────────────────
+    function toggle(btn, value) {
+      btn.classList.toggle('on', value);
+    }
+    btnOrbit.addEventListener('click', () => { autoOrbit = !autoOrbit; toggle(btnOrbit, autoOrbit); });
+    btnVec  .addEventListener('click', () => { showVec   = !showVec;   toggle(btnVec, showVec); });
+    btnRing .addEventListener('click', () => { showRing  = !showRing;  toggle(btnRing, showRing); });
+    btnHide .addEventListener('click', () => { hideTag   = !hideTag;   toggle(btnHide, hideTag); });
+    btnReset.addEventListener('click', () => { reset(); });
+
+    // ── drag ──────────────────────────────────────────────────────
+    let dragging = false, dragOffX = 0, dragOffY = 0;
+    function pointerPos(e) {
+      const r = stage.getBoundingClientRect();
+      const p = e.touches ? e.touches[0] : e;
+      return { x: p.clientX - r.left, y: p.clientY - r.top };
+    }
+    function startDrag(e) {
+      const p = pointerPos(e);
+      const dx = p.x - marker.x, dy = p.y - marker.y;
+      const r = 56;
+      if (dx*dx + dy*dy <= r*r) {
+        dragging = true;
+        stage.classList.add('dragging');
+        dragOffX = dx; dragOffY = dy;
+        autoOrbit = false; toggle(btnOrbit, false);
+        lastInteract = performance.now();
+        if (hint) hint.classList.add('fade');
+        e.preventDefault();
+      }
+    }
+    function moveDrag(e) {
+      if (!dragging) return;
+      const p = pointerPos(e);
+      marker.x = Math.max(20, Math.min(W - 20, p.x - dragOffX));
+      marker.y = Math.max(20, Math.min(H - 20, p.y - dragOffY));
+      lastInteract = performance.now();
+      e.preventDefault();
+    }
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      stage.classList.remove('dragging');
+    }
+    stage.addEventListener('mousedown',  startDrag);
+    window.addEventListener('mousemove', moveDrag);
+    window.addEventListener('mouseup',   endDrag);
+    stage.addEventListener('touchstart', startDrag, { passive: false });
+    window.addEventListener('touchmove', moveDrag, { passive: false });
+    window.addEventListener('touchend',  endDrag);
+
+    // ── PD step ────────────────────────────────────────────────────
+    function step(dt) {
+      // Auto-orbit · Lissajous (figure-eight) when idle
+      const idleMs = performance.now() - lastInteract;
+      if (autoOrbit && !dragging && idleMs > 1500) {
+        orbitT += dt;
+        const cx = W * 0.55, cy = H * 0.50;
+        const ax = Math.min(W * 0.30, 320);
+        const ay = Math.min(H * 0.30, 180);
+        marker.x = cx + ax * Math.sin(orbitT * 0.55);
+        marker.y = cy + ay * Math.sin(orbitT * 1.10);    // 1:2 frequency
+      } else {
+        // bias orbit phase so resuming feels continuous
+        orbitT += dt * 0.0;
+      }
+
+      const tagSeen = !hideTag;
+      if (tagSeen) lostT = 0;
+      else lostT += dt;
+
+      // ── state machine ────────────────────────────────────────
+      if (state === 'IDLE') {
+        if (tagSeen) { armT += dt; if (armT > ARM_T) { state = 'ARM'; armT = 0; } }
+        else armT = 0;
+      } else if (state === 'ARM') {
+        // brief takeoff hold
+        armT += dt;
+        if (armT > 0.6) { state = 'FOLLOW'; }
+      } else if (state === 'FOLLOW') {
+        if (!tagSeen && lostT > SEARCH_T) state = 'SEARCH';
+      } else if (state === 'SEARCH') {
+        if (tagSeen) { state = 'FOLLOW'; }
+        else if (lostT > LAND_T) state = 'LAND';
+      } else if (state === 'LAND') {
+        // sticky — until reset
+      }
+
+      // ── controller ────────────────────────────────────────────
+      let cmd_vx = 0, cmd_vy = 0, cmd_w = 0;
+      if (state === 'FOLLOW' && tagSeen) {
+        const dx = marker.x - drone.x;
+        const dy = marker.y - drone.y;
+        const dist = Math.hypot(dx, dy);
+        const dirx = dx / (dist || 1);
+        const diry = dy / (dist || 1);
+
+        // Forward error: how far we are from the target distance
+        const e_fwd = dist - TARGET_DIST;
+        const de_fwd = e_fwd - prev_e_fwd; prev_e_fwd = e_fwd;
+        lpf_fwd = ALPHA * de_fwd + (1 - ALPHA) * lpf_fwd;
+        const speed = Kp_fwd * e_fwd + Kd_fwd * lpf_fwd;
+
+        // Velocity along the bearing to the marker
+        cmd_vx = Math.max(-MAX_V/100, Math.min(MAX_V/100, speed)) * dirx * 100;
+        cmd_vy = Math.max(-MAX_V/100, Math.min(MAX_V/100, speed)) * diry * 100;
+
+        // Yaw error: align drone heading with bearing to marker
+        const target_yaw = Math.atan2(dy, dx);
+        let e_yaw = target_yaw - drone.yaw;
+        while (e_yaw >  Math.PI) e_yaw -= 2 * Math.PI;
+        while (e_yaw < -Math.PI) e_yaw += 2 * Math.PI;
+        const de_yaw = e_yaw - prev_e_yaw; prev_e_yaw = e_yaw;
+        lpf_yaw = ALPHA * de_yaw + (1 - ALPHA) * lpf_yaw;
+        cmd_w = Kp_yaw * e_yaw + Kd_yaw * lpf_yaw;
+        cmd_w = Math.max(-MAX_W, Math.min(MAX_W, cmd_w));
+      } else if (state === 'SEARCH') {
+        // yaw scan, slow drift to halt
+        cmd_w = 1.4;
+        cmd_vx = drone.vx * 0.92;
+        cmd_vy = drone.vy * 0.92;
+      } else if (state === 'LAND') {
+        cmd_vx = drone.vx * 0.85;
+        cmd_vy = drone.vy * 0.85;
+        cmd_w = 0;
+      } else {
+        // IDLE / ARM
+        cmd_vx = 0; cmd_vy = 0; cmd_w = 0;
+      }
+
+      drone.vx = cmd_vx;
+      drone.vy = cmd_vy;
+      drone.w  = cmd_w;
+      drone.x += drone.vx * dt;
+      drone.y += drone.vy * dt;
+      drone.yaw += drone.w * dt;
+      // wrap yaw
+      while (drone.yaw >  Math.PI) drone.yaw -= 2 * Math.PI;
+      while (drone.yaw < -Math.PI) drone.yaw += 2 * Math.PI;
+    }
+
+    // ── trail ─────────────────────────────────────────────────────
+    const trail = [];
+    function pushTrail() {
+      trail.push({ x: drone.x, y: drone.y });
+      if (trail.length > 80) trail.shift();
+    }
+
+    // ── draw ──────────────────────────────────────────────────────
+    function drawArucoMarker(x, y, size, faded) {
+      const half = size / 2;
+      ctx.save();
+      ctx.translate(x, y);
+      // Drop shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.18)';
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetY = 4;
+      // Outer black border
+      ctx.fillStyle = faded ? '#7a7974' : '#141414';
+      ctx.fillRect(-half, -half, size, size);
+      ctx.shadowColor = 'transparent';
+      // Inner white
+      const inner = size * 0.78;
+      ctx.fillStyle = '#fafaf7';
+      ctx.fillRect(-inner/2, -inner/2, inner, inner);
+      // 5x5 black/white pattern (fixed; mimics ID 0)
+      const cell = inner / 5;
+      const pat = [
+        [1,0,1,0,1],
+        [0,1,1,1,0],
+        [1,1,0,1,1],
+        [0,1,1,1,0],
+        [1,0,1,0,1],
+      ];
+      ctx.fillStyle = faded ? '#7a7974' : '#141414';
+      for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+        if (pat[r][c]) ctx.fillRect(-inner/2 + c*cell, -inner/2 + r*cell, cell, cell);
+      }
+      ctx.restore();
+    }
+
+    function drawDrone(d) {
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      ctx.rotate(d.yaw);
+      // shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.20)';
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 5;
+      // body
+      ctx.fillStyle = '#262510';
+      ctx.beginPath();
+      ctx.arc(0, 0, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      // arms
+      ctx.strokeStyle = '#262510';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      const r = 22;
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx, sy]) => {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(sx * r * 0.7, sy * r * 0.7);
+        ctx.stroke();
+      });
+      // rotors (blurred)
+      ctx.fillStyle = 'rgba(245,78,0,0.18)';
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx, sy]) => {
+        ctx.beginPath();
+        ctx.arc(sx * r * 0.7, sy * r * 0.7, 8, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      // facing arrow
+      ctx.fillStyle = '#f54e00';
+      ctx.beginPath();
+      ctx.moveTo(16, 0);
+      ctx.lineTo(8, -5);
+      ctx.lineTo(8,  5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Connecting line + safe distance ring
+      if (showRing && !hideTag) {
+        ctx.strokeStyle = 'rgba(38,37,16,0.22)';
+        ctx.setLineDash([6, 6]);
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(marker.x, marker.y, TARGET_DIST, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (showVec && !hideTag) {
+        ctx.strokeStyle = 'rgba(245,78,0,0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(drone.x, drone.y);
+        ctx.lineTo(marker.x, marker.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Trail
+      ctx.strokeStyle = 'rgba(38,37,16,0.18)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      trail.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+
+      // Marker
+      drawArucoMarker(marker.x, marker.y, 64, hideTag);
+      if (hideTag) {
+        ctx.font = '11px JetBrains Mono, monospace';
+        ctx.fillStyle = '#7a7974';
+        ctx.textAlign = 'center';
+        ctx.fillText('tag occluded', marker.x, marker.y + 56);
+      }
+
+      // Drone
+      drawDrone(drone);
+
+      // Velocity vector
+      if (showVec) {
+        const sp = Math.hypot(drone.vx, drone.vy);
+        if (sp > 5) {
+          ctx.strokeStyle = '#f54e00';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(drone.x, drone.y);
+          ctx.lineTo(drone.x + drone.vx * 0.30, drone.y + drone.vy * 0.30);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // ── HUD ────────────────────────────────────────────────────────
+    const STATE_COLOR = {
+      IDLE:   ['var(--muted-stone)',         '#7a7974'],
+      ARM:    ['var(--forest-green-action)', '#34785c'],
+      FOLLOW: ['var(--chartreuse-alert)',    '#4ade80'],
+      SEARCH: ['var(--goldenrod-accent)',    '#c08532'],
+      LAND:   ['var(--onyx-outline)',        '#f54e00'],
+    };
+    function fmt(n, d) { return (n >= 0 ? '+' : '') + n.toFixed(d); }
+    function updateHUD() {
+      const [css, hex] = STATE_COLOR[state] || STATE_COLOR.IDLE;
+      elState.firstChild && (elState.lastChild.textContent = state);
+      elDot.style.background = hex;
+      elState.lastChild && (elState.lastChild.nodeValue = state);
+      // Re-render whole text safely:
+      elState.innerHTML = '<span class="dot" style="background:' + hex + '"></span>' + state;
+
+      // m/s · pixels → meters: 100 px = 1 m
+      elVx.textContent  = fmt(drone.vx / 100, 2);
+      elVy.textContent  = fmt(drone.vy / 100, 2);
+      elYaw.textContent = fmt(drone.w, 2);
+      const dist = Math.hypot(marker.x - drone.x, marker.y - drone.y);
+      elDist.textContent = (dist / 100).toFixed(2) + ' m';
+      elLoss.textContent = lostT.toFixed(1) + ' s';
+      elLoss.classList.toggle('amber', lostT > SEARCH_T && lostT <= LAND_T);
+      elLoss.classList.toggle('red',   lostT > LAND_T);
+      elLoss.classList.toggle('muted', lostT === 0);
+    }
+
+    // ── loop ──────────────────────────────────────────────────────
+    let last = performance.now();
+    let trailTick = 0;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      step(dt);
+      trailTick += dt;
+      if (trailTick > 0.05) { pushTrail(); trailTick = 0; }
+      draw();
+      updateHUD();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+
+  // ───────────── Architecture pipeline · mode toggle ─────────────
+  (function () {
+    const root = document.getElementById('pipeline');
+    if (!root) return;
+    const btns  = root.querySelectorAll('.pipeline-mode');
+    const swaps = root.querySelectorAll('.swap');
+
+    btns.forEach((b) => {
+      b.addEventListener('click', () => {
+        const mode = b.dataset.mode;
+        if (root.dataset.mode === mode) return;
+        // Fade swap labels out → switch text → fade in
+        swaps.forEach(s => s.classList.add('fading'));
+        setTimeout(() => {
+          root.dataset.mode = mode;
+          btns.forEach(x => x.classList.toggle('active', x === b));
+          swaps.forEach(s => {
+            const next = s.dataset[mode];
+            if (next) s.textContent = next;
+          });
+          requestAnimationFrame(() => {
+            swaps.forEach(s => s.classList.remove('fading'));
+          });
+        }, 180);
+      });
+    });
+  })();
+
+  // ───────────── Hero sim · same logic, no toolbar ─────────────
+  (function () {
+    const stage = document.getElementById('hero-sim-stage');
+    const cv    = document.getElementById('hero-sim-canvas');
+    const hint  = document.getElementById('hero-sim-hint');
+    if (!stage || !cv) return;
+    const ctx = cv.getContext('2d');
+
+    let W = 600, H = 480, dpr = 1;
+    function resize() {
+      const r = stage.getBoundingClientRect();
+      dpr = window.devicePixelRatio || 1;
+      W = r.width; H = r.height;
+      cv.width  = W * dpr;
+      cv.height = H * dpr;
+      cv.style.width  = W + 'px';
+      cv.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    // PARAMS · same as #online
+    const TARGET_DIST = 110;
+    const Kp_fwd = 0.020, Kd_fwd = 0.18;
+    const Kp_yaw = 1.4,    Kd_yaw  = 0.4;
+    const ALPHA  = 0.4;
+    const MAX_V  = 320;
+    const MAX_W  = 2.0;
+
+    let marker = { x: W * 0.65, y: H * 0.40 };
+    let drone  = { x: W * 0.30, y: H * 0.65, yaw: 0, vx: 0, vy: 0, w: 0 };
+    let lpf_fwd = 0, lpf_yaw = 0;
+    let prev_e_fwd = 0, prev_e_yaw = 0;
+    let orbitT = 0;
+    let lastInteract = performance.now();
+    const trail = [];
+
+    // Drag
+    let dragging = false, dragOffX = 0, dragOffY = 0;
+    function ptr(e) {
+      const r = stage.getBoundingClientRect();
+      const p = e.touches ? e.touches[0] : e;
+      return { x: p.clientX - r.left, y: p.clientY - r.top };
+    }
+    stage.addEventListener('mousedown',  startDrag);
+    window.addEventListener('mousemove', moveDrag);
+    window.addEventListener('mouseup',   endDrag);
+    stage.addEventListener('touchstart', startDrag, { passive: false });
+    window.addEventListener('touchmove', moveDrag, { passive: false });
+    window.addEventListener('touchend',  endDrag);
+    function startDrag(e) {
+      const p = ptr(e);
+      const dx = p.x - marker.x, dy = p.y - marker.y;
+      if (dx*dx + dy*dy <= 56*56) {
+        dragging = true;
+        dragOffX = dx; dragOffY = dy;
+        lastInteract = performance.now();
+        if (hint) hint.classList.add('fade');
+        e.preventDefault();
+      }
+    }
+    function moveDrag(e) {
+      if (!dragging) return;
+      const p = ptr(e);
+      marker.x = Math.max(20, Math.min(W - 20, p.x - dragOffX));
+      marker.y = Math.max(20, Math.min(H - 20, p.y - dragOffY));
+      lastInteract = performance.now();
+      e.preventDefault();
+    }
+    function endDrag() { dragging = false; }
+
+    function step(dt) {
+      // Auto-orbit when idle ≥ 1.5s
+      const idle = performance.now() - lastInteract;
+      if (!dragging && idle > 1500) {
+        orbitT += dt;
+        const cx = W * 0.55, cy = H * 0.45;
+        const ax = Math.min(W * 0.28, 200);
+        const ay = Math.min(H * 0.28, 130);
+        marker.x = cx + ax * Math.sin(orbitT * 0.55);
+        marker.y = cy + ay * Math.sin(orbitT * 1.10);
+      }
+
+      const dx = marker.x - drone.x;
+      const dy = marker.y - drone.y;
+      const dist = Math.hypot(dx, dy);
+      const dirx = dx / (dist || 1);
+      const diry = dy / (dist || 1);
+
+      // forward PD
+      const e_fwd = dist - TARGET_DIST;
+      const de_fwd = e_fwd - prev_e_fwd; prev_e_fwd = e_fwd;
+      lpf_fwd = ALPHA * de_fwd + (1 - ALPHA) * lpf_fwd;
+      const speed = Kp_fwd * e_fwd + Kd_fwd * lpf_fwd;
+      drone.vx = Math.max(-MAX_V/100, Math.min(MAX_V/100, speed)) * dirx * 100;
+      drone.vy = Math.max(-MAX_V/100, Math.min(MAX_V/100, speed)) * diry * 100;
+
+      // yaw PD
+      const target_yaw = Math.atan2(dy, dx);
+      let e_yaw = target_yaw - drone.yaw;
+      while (e_yaw >  Math.PI) e_yaw -= 2 * Math.PI;
+      while (e_yaw < -Math.PI) e_yaw += 2 * Math.PI;
+      const de_yaw = e_yaw - prev_e_yaw; prev_e_yaw = e_yaw;
+      lpf_yaw = ALPHA * de_yaw + (1 - ALPHA) * lpf_yaw;
+      drone.w = Math.max(-MAX_W, Math.min(MAX_W, Kp_yaw * e_yaw + Kd_yaw * lpf_yaw));
+
+      drone.x += drone.vx * dt;
+      drone.y += drone.vy * dt;
+      drone.yaw += drone.w * dt;
+      while (drone.yaw >  Math.PI) drone.yaw -= 2 * Math.PI;
+      while (drone.yaw < -Math.PI) drone.yaw += 2 * Math.PI;
+    }
+
+    function drawArucoMarker(x, y, size) {
+      const half = size / 2;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.shadowColor = 'rgba(0,0,0,0.18)';
+      ctx.shadowBlur = 14; ctx.shadowOffsetY = 4;
+      ctx.fillStyle = '#141414';
+      ctx.fillRect(-half, -half, size, size);
+      ctx.shadowColor = 'transparent';
+      const inner = size * 0.78;
+      ctx.fillStyle = '#fafaf7';
+      ctx.fillRect(-inner/2, -inner/2, inner, inner);
+      const cell = inner / 5;
+      const pat = [
+        [1,0,1,0,1],
+        [0,1,1,1,0],
+        [1,1,0,1,1],
+        [0,1,1,1,0],
+        [1,0,1,0,1],
+      ];
+      ctx.fillStyle = '#141414';
+      for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+        if (pat[r][c]) ctx.fillRect(-inner/2 + c*cell, -inner/2 + r*cell, cell, cell);
+      }
+      ctx.restore();
+    }
+
+    function drawDrone(d) {
+      ctx.save();
+      ctx.translate(d.x, d.y);
+      ctx.rotate(d.yaw);
+      ctx.shadowColor = 'rgba(0,0,0,0.20)';
+      ctx.shadowBlur = 12; ctx.shadowOffsetY = 4;
+      ctx.fillStyle = '#262510';
+      ctx.beginPath();
+      ctx.arc(0, 0, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = '#262510';
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = 'round';
+      const r = 18;
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx, sy]) => {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(sx * r * 0.7, sy * r * 0.7);
+        ctx.stroke();
+      });
+      ctx.fillStyle = 'rgba(245,78,0,0.18)';
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx, sy]) => {
+        ctx.beginPath();
+        ctx.arc(sx * r * 0.7, sy * r * 0.7, 6.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.fillStyle = '#f54e00';
+      ctx.beginPath();
+      ctx.moveTo(13, 0);
+      ctx.lineTo(7, -4);
+      ctx.lineTo(7,  4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // safe ring
+      ctx.strokeStyle = 'rgba(38,37,16,0.22)';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(marker.x, marker.y, TARGET_DIST, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // bearing line
+      ctx.strokeStyle = 'rgba(245,78,0,0.40)';
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(drone.x, drone.y);
+      ctx.lineTo(marker.x, marker.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // trail
+      ctx.strokeStyle = 'rgba(38,37,16,0.18)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      trail.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+
+      drawArucoMarker(marker.x, marker.y, 52);
+      drawDrone(drone);
+    }
+
+    let last = performance.now(), trailT = 0;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      step(dt);
+      trailT += dt;
+      if (trailT > 0.05) {
+        trail.push({ x: drone.x, y: drone.y });
+        if (trail.length > 70) trail.shift();
+        trailT = 0;
+      }
+      draw();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+</script>
+
+</body>
+</html>
