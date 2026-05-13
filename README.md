@@ -1,4 +1,4 @@
-# Autonomous Safe Drone Convoy Following · CS 106A
+# Autonomous Safe Drone Following · CS 106A
 
 Static one-page site for our EE/CS 106A Spring 2026 final project.
 
@@ -34,17 +34,17 @@ vercel --prod
 
 ## Site structure
 
-1. Hero · live in-browser drone-follower sim
-2. Team · 4 contributors
-3. Motivation · convoying for UAVs
-4. System architecture · animated ROS pipeline (ArUco / Face mode toggle)
-5. Core code · auto-playing 5-stage Cursor-Desktop demo
-6. Operation · 5-state safety machine
-7. Try it online · interactive AR-tag follower (drag + auto-orbit)
-8. Live demos · sim + real classroom footage
-9. Failures & mitigations · 6 issues we hit
-10. Future plans · 4 directions
-11. Real-hardware bridges · `tello-station.sh` + `tt_show_aruco.py`
-12. Quickstart
+The page is organized as a static technical case study: story first, proof second, and appendix material last.
+
+1. Hero · what the project is, core metrics, and a real Tello demo loop
+2. Project Overview / Introduction · goal, motivation, hardware context
+3. Results First · Gazebo, ArUco, and YOLOv8 face-tracking demos
+4. System Design · ROS 2 perception → control → Tello actuation pipeline
+5. Implementation · hardware, software stack, nodes, topics, and expandable code-stage appendix
+6. Control + Safety · visual servoing and 5-state safety machine
+7. Failure Modes + Fixes · six real issues with causes and mitigations
+8. Future Work / Conclusion · limitations and next steps
+9. Team Contributions · major contributions by member
+10. Resources / Additional Materials · GitHub, slides placeholder, videos, package appendix, interactive sim, hardware bridges, and quickstart
 
 — EE/CS 106A · Spring 2026
