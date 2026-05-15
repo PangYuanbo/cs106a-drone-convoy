@@ -1263,6 +1263,14 @@
     .os-hud .cell, .os-hud .state-cell { border-right: 0; border-bottom: 1px solid var(--code-line); }
   }
 
+
+  /* ───────────── Embedded supporting blocks ───────────── */
+  .embedded-section {
+    margin-top: 56px;
+    padding-top: 36px;
+    border-top: 1px solid rgba(38, 37, 16, 0.08);
+  }
+
   /* ───────────── Responsive ───────────── */
   @media (max-width: 1080px) {
     .grid-4 { grid-template-columns: repeat(2, 1fr); }
@@ -1292,16 +1300,16 @@
     </div>
     <ul>
       <li><a href="#team">Team</a></li>
-      <li><a href="#motivation">Introduction</a></li>
-      <li><a href="#design">Design</a></li>
+      <li><a href="#motivation">Motivation</a></li>
       <li><a href="#architecture">Architecture</a></li>
       <li><a href="#core">Code</a></li>
+      <li><a href="#operation">Operation</a></li>
       <li><a href="#online">Try it</a></li>
-      <li><a href="#slides">Slides</a></li>
       <li><a href="#demos">Demos</a></li>
-      <li><a href="#results">Results</a></li>
-      <li><a href="#conclusion">Conclusion</a></li>
-      <li><a href="#impact">Impact</a></li>
+      <li><a href="#failures">Failures</a></li>
+      <li><a href="#future">Future</a></li>
+      <li><a href="#hardware">Hardware</a></li>
+      <li><a href="#run">Quickstart</a></li>
     </ul>
     <a class="nav-cta" href="https://github.com/Tyler6666666/106a_final_project.git" target="_blank" rel="noopener">
       GitHub →
@@ -1431,7 +1439,7 @@
 <!-- ════════════ MOTIVATION ════════════ -->
 <section id="motivation">
   <div class="container">
-    <span class="eyebrow">02 · Introduction</span>
+    <span class="eyebrow">02 · Motivation</span>
     <h2>Why drone convoying, and why it matters</h2>
     <div class="grid-2" style="margin-top: 24px;">
       <div>
@@ -1498,100 +1506,62 @@
         <p>In large warehouses or campus delivery, a convoy of drones can follow a lead vehicle (ground or air) along a route, each carrying a different package. One operator handles the whole fleet.</p>
       </div>
     </div>
-  </div>
-</section>
 
-<hr class="section-divider" />
+    <div class="embedded-section" id="impact">
+    <span class="eyebrow">Supporting · Real-world impact</span>
+    <h2>How this extends beyond a class project</h2>
 
-<!-- ════════════ DESIGN ════════════ -->
-<section id="design">
-  <div class="container">
-    <span class="eyebrow">03 · Design</span>
-    <h2>What we needed, what we picked, and the trade-offs</h2>
+    <h3>Real-world extensions</h3>
+    <p>
+      The core idea — a vision-based follower drone that doesn't need GPS or expensive sensors — could
+      scale in several directions. In <strong>disaster response</strong>, a convoy of follower drones could
+      trail a human-piloted lead drone into areas with no GPS or cell coverage (collapsed buildings,
+      dense forests) and collectively map the scene or relay communications. In <strong>agriculture</strong>,
+      a lead drone flying a survey pattern could have followers at different altitudes carrying different
+      sensors (multispectral, thermal) without needing each one to be independently piloted. In
+      <strong>film and media</strong>, multi-angle drone shots currently require one pilot per drone —
+      a convoy system would let a single cinematographer control the formation.
+    </p>
+    <p>
+      The swappable perception design is also relevant: in real deployments, you might track a
+      vehicle (not a marker or face) using a different detector, but the controller and safety state
+      machine would stay the same.
+    </p>
 
-    <h3>Design criteria</h3>
-    <p>For our system to be useful, it had to meet these requirements:</p>
+    <h3 style="margin-top: 32px;">Societal implications</h3>
     <div class="grid-2" style="margin-top: 16px;">
       <div class="card">
-        <div class="icon">①</div>
-        <h3>Stable following at safe distance</h3>
-        <p>The follower drone must maintain roughly 1.5 m behind the leader without overshooting or oscillating into it. Collision = broken drone = failed project.</p>
+        <div class="icon">⚠</div>
+        <h3>Privacy and surveillance</h3>
+        <p>A drone that autonomously follows a person (face mode) raises obvious privacy concerns.
+           Our system deliberately requires the target to opt in (stand in front of the camera
+           to initialize tracking). But in a production system, technical consent mechanisms
+           and clear regulations would be needed to prevent misuse for unauthorized surveillance.</p>
       </div>
       <div class="card">
-        <div class="icon">②</div>
-        <h3>Graceful failure</h3>
-        <p>If the drone loses sight of the target, it should not fly off randomly. It needs to hover, scan, and land safely if it can't re-acquire.</p>
+        <div class="icon">🛡</div>
+        <h3>Safety in shared airspace</h3>
+        <p>Autonomous drones in public spaces need geo-fencing, altitude limits, and collision
+           avoidance with other aircraft. Our system only handles leader-follower safety (land if
+           lost), not airspace deconfliction. Real deployment would require integration with
+           UTM (unmanned traffic management) systems.</p>
       </div>
       <div class="card">
-        <div class="icon">③</div>
-        <h3>Swappable perception</h3>
-        <p>We wanted at least two tracking modes (ArUco marker and face) that share the same controller, so we can switch without rewriting control code.</p>
+        <div class="icon">🤝</div>
+        <h3>Accessibility</h3>
+        <p>Convoying lowers the skill barrier: instead of training multiple pilots, one operator
+           can manage a fleet. This could make drone technology accessible to smaller organizations
+           (local fire departments, small farms) that can't afford a team of licensed pilots.</p>
       </div>
       <div class="card">
-        <div class="icon">④</div>
-        <h3>Run on cheap hardware</h3>
-        <p>We had a $100 Tello and a laptop. No Jetson, no RTK GPS, no LiDAR. Everything has to work over Wi-Fi with a 720p camera.</p>
+        <div class="icon">⚖</div>
+        <h3>Dual use</h3>
+        <p>Like most autonomous systems, convoy drones could be repurposed for military or
+           law-enforcement applications. The same follow-the-leader capability used for
+           search-and-rescue could be used for tracking individuals without consent. Responsible
+           deployment requires clear use-case restrictions and oversight.</p>
       </div>
     </div>
-
-    <h3 style="margin-top: 36px;">Key design choices and trade-offs</h3>
-    <div class="table-wrap" style="margin-top: 16px;">
-      <table>
-        <thead>
-          <tr><th>Decision</th><th>What we chose</th><th>Alternative</th><th>Why</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Compute location</td>
-            <td><strong>Off-board</strong> (laptop)</td>
-            <td>On-board (Jetson)</td>
-            <td>Tello has no companion-computer port. We send video over Wi-Fi and run perception on the laptop.</td>
-          </tr>
-          <tr>
-            <td>Primary tracker</td>
-            <td><strong>ArUco marker</strong></td>
-            <td>Full-body pose / GPS</td>
-            <td>ArUco gives 6-DoF metric pose from a single cheap camera with OpenCV — no training data, no GPS.</td>
-          </tr>
-          <tr>
-            <td>Controller</td>
-            <td><strong>PD + low-pass filter</strong></td>
-            <td>PID / MPC</td>
-            <td>PD is simple and good enough at low speed. The low-pass filter handles noisy pose estimates. Adding I-term caused wind-up issues on the Tello.</td>
-          </tr>
-          <tr>
-            <td>Communication</td>
-            <td><strong>ROS 2 topics</strong></td>
-            <td>Custom sockets</td>
-            <td>ROS 2 gives us pub/sub, launch files, and easy node swapping. Standard in robotics courses and industry.</td>
-          </tr>
-          <tr>
-            <td>Face tracking</td>
-            <td><strong>YOLOv8 + Haar fallback</strong></td>
-            <td>MediaPipe / dlib</td>
-            <td>YOLOv8 is fast and accurate. Haar cascade is a lightweight backup when YOLO drops a frame.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 style="margin-top: 36px;">How these choices affect real-world engineering qualities</h3>
-    <div class="grid-3" style="margin-top: 16px;">
-      <div class="card">
-        <div class="icon">⛑</div>
-        <h3>Robustness</h3>
-        <p>The five-state safety machine means the drone always has a defined behavior, even when things go wrong. Lost the target? Hover and scan. Still lost after 5 seconds? Land. No undefined states.</p>
-      </div>
-      <div class="card">
-        <div class="icon">⚡</div>
-        <h3>Efficiency</h3>
-        <p>ArUco detection runs at 30 Hz on a laptop CPU — no GPU needed. PD control is a few multiplications per cycle. The whole pipeline fits in the Tello's ~15-minute battery window.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🔧</div>
-        <h3>Maintainability</h3>
-        <p>Because perception and control are separate ROS nodes, we can swap in a new tracker (e.g., LiDAR-based) without touching the controller. Each node is a single Python file under 200 lines.</p>
-      </div>
     </div>
   </div>
 </section>
@@ -1601,7 +1571,7 @@
 <!-- ════════════ ARCHITECTURE ════════════ -->
 <section id="architecture">
   <div class="container">
-    <span class="eyebrow">04 · System Architecture</span>
+    <span class="eyebrow">03 · System Architecture</span>
     <h2>How the system is wired together</h2>
     <p class="lede">
       We use <strong>ROS 2 Humble</strong> to connect the base station and the drone.
@@ -1697,13 +1667,103 @@
         <span class="pipeline-also"><code>/tello_action</code> — takeoff / land service runs alongside.</span>
       </div>
     </div>
+
+    <div class="embedded-section" id="design">
+    <span class="eyebrow">Supporting · Design decisions</span>
+    <h2>What we needed, what we picked, and the trade-offs</h2>
+
+    <h3>Design criteria</h3>
+    <p>For our system to be useful, it had to meet these requirements:</p>
+    <div class="grid-2" style="margin-top: 16px;">
+      <div class="card">
+        <div class="icon">①</div>
+        <h3>Stable following at safe distance</h3>
+        <p>The follower drone must maintain roughly 1.5 m behind the leader without overshooting or oscillating into it. Collision = broken drone = failed project.</p>
+      </div>
+      <div class="card">
+        <div class="icon">②</div>
+        <h3>Graceful failure</h3>
+        <p>If the drone loses sight of the target, it should not fly off randomly. It needs to hover, scan, and land safely if it can't re-acquire.</p>
+      </div>
+      <div class="card">
+        <div class="icon">③</div>
+        <h3>Swappable perception</h3>
+        <p>We wanted at least two tracking modes (ArUco marker and face) that share the same controller, so we can switch without rewriting control code.</p>
+      </div>
+      <div class="card">
+        <div class="icon">④</div>
+        <h3>Run on cheap hardware</h3>
+        <p>We had a $100 Tello and a laptop. No Jetson, no RTK GPS, no LiDAR. Everything has to work over Wi-Fi with a 720p camera.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 36px;">Key design choices and trade-offs</h3>
+    <div class="table-wrap" style="margin-top: 16px;">
+      <table>
+        <thead>
+          <tr><th>Decision</th><th>What we chose</th><th>Alternative</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Compute location</td>
+            <td><strong>Off-board</strong> (laptop)</td>
+            <td>On-board (Jetson)</td>
+            <td>Tello has no companion-computer port. We send video over Wi-Fi and run perception on the laptop.</td>
+          </tr>
+          <tr>
+            <td>Primary tracker</td>
+            <td><strong>ArUco marker</strong></td>
+            <td>Full-body pose / GPS</td>
+            <td>ArUco gives 6-DoF metric pose from a single cheap camera with OpenCV — no training data, no GPS.</td>
+          </tr>
+          <tr>
+            <td>Controller</td>
+            <td><strong>PD + low-pass filter</strong></td>
+            <td>PID / MPC</td>
+            <td>PD is simple and good enough at low speed. The low-pass filter handles noisy pose estimates. Adding I-term caused wind-up issues on the Tello.</td>
+          </tr>
+          <tr>
+            <td>Communication</td>
+            <td><strong>ROS 2 topics</strong></td>
+            <td>Custom sockets</td>
+            <td>ROS 2 gives us pub/sub, launch files, and easy node swapping. Standard in robotics courses and industry.</td>
+          </tr>
+          <tr>
+            <td>Face tracking</td>
+            <td><strong>YOLOv8 + Haar fallback</strong></td>
+            <td>MediaPipe / dlib</td>
+            <td>YOLOv8 is fast and accurate. Haar cascade is a lightweight backup when YOLO drops a frame.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top: 36px;">How these choices affect real-world engineering qualities</h3>
+    <div class="grid-3" style="margin-top: 16px;">
+      <div class="card">
+        <div class="icon">⛑</div>
+        <h3>Robustness</h3>
+        <p>The five-state safety machine means the drone always has a defined behavior, even when things go wrong. Lost the target? Hover and scan. Still lost after 5 seconds? Land. No undefined states.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h3>Efficiency</h3>
+        <p>ArUco detection runs at 30 Hz on a laptop CPU — no GPU needed. PD control is a few multiplications per cycle. The whole pipeline fits in the Tello's ~15-minute battery window.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔧</div>
+        <h3>Maintainability</h3>
+        <p>Because perception and control are separate ROS nodes, we can swap in a new tracker (e.g., LiDAR-based) without touching the controller. Each node is a single Python file under 200 lines.</p>
+      </div>
+    </div>
+    </div>
   </div>
 </section>
 
 <!-- ════════════ CORE CODE · auto-playing Cursor-style demo ════════════ -->
 <section id="core">
   <div class="container">
-    <span class="eyebrow">05 · Core code</span>
+    <span class="eyebrow">04 · Core code</span>
     <h2>Walking through the code, stage by stage</h2>
     <p class="lede">
       Here's how a single camera frame turns into a motor command, from start to finish.
@@ -1917,7 +1977,7 @@
 <!-- ════════════ OPERATION ════════════ -->
 <section id="operation">
   <div class="container">
-    <span class="eyebrow">06 · Operation</span>
+    <span class="eyebrow">05 · Operation</span>
     <h2>The safety state machine</h2>
     <p class="lede">
       The leader takes off and is controlled by a human. The follower waits until it
@@ -1959,7 +2019,7 @@
 <!-- ════════════ ONLINE SIM · interactive in-browser ════════════ -->
 <section id="online">
   <div class="container">
-    <span class="eyebrow">07 · Try it online</span>
+    <span class="eyebrow">06 · Try it online</span>
     <h2>Drag the AR tag. The drone follows.</h2>
     <p class="lede">
       The same PD + low-pass filter and 5-state safety machine as the real
@@ -2027,29 +2087,10 @@
   </div>
 </section>
 
-<!-- ════════════ FINAL PRESENTATION ════════════ -->
-<section id="slides">
-  <div class="container">
-    <span class="eyebrow">08 · Final Presentation</span>
-    <h2>Our demo-day slides.</h2>
-    <p class="lede">
-      The deck we presented during the final demo session. Click through below or
-      <a href="https://docs.google.com/presentation/d/1LvLhKlG0UQhenk2a5sxfh90NftjuUv4PibATQm_J-_g/edit?usp=sharing" target="_blank" rel="noopener">open in Google Slides&nbsp;→</a>
-    </p>
-    <div style="margin-top: 20px; border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-xl); border: 1px solid rgba(38,37,16,0.08);">
-      <iframe src="https://docs.google.com/presentation/d/1LvLhKlG0UQhenk2a5sxfh90NftjuUv4PibATQm_J-_g/embed?start=false&loop=false&delayms=3000"
-              frameborder="0" width="100%" height="569" allowfullscreen="true"
-              style="display:block;"></iframe>
-    </div>
-  </div>
-</section>
-
-<hr class="section-divider"/>
-
 <!-- ════════════ DEMOS ════════════ -->
 <section id="demos">
   <div class="container">
-    <span class="eyebrow">09 · Live Demos</span>
+    <span class="eyebrow">07 · Live Demos</span>
     <h2>Demo videos</h2>
     <p class="lede">
       All three demos run the same perception → control pipeline, just in different environments.
@@ -2140,13 +2181,9 @@
         </div>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- ════════════ RESULTS ════════════ -->
-<section id="results">
-  <div class="container">
-    <span class="eyebrow">10 · Results</span>
+    <div class="embedded-section" id="results">
+    <span class="eyebrow">Supporting · Results and evaluation</span>
     <h2>How well it actually worked</h2>
     <p class="lede">
       We tested the system across simulation (Gazebo), real ArUco tracking, and real face tracking.
@@ -2207,15 +2244,14 @@
         </tbody>
       </table>
     </div>
+    </div>
   </div>
 </section>
-
-<hr class="section-divider" />
 
 <!-- ════════════ FAILURES ════════════ -->
 <section id="failures">
   <div class="container">
-    <span class="eyebrow">11 · Difficulties &amp; Fixes</span>
+    <span class="eyebrow">08 · Failures &amp; Mitigations</span>
     <h2>Problems we ran into and how we fixed them</h2>
 
     <div class="grid-3" style="margin-top: 24px;">
@@ -2272,7 +2308,7 @@
 <!-- ════════════ FUTURE ════════════ -->
 <section id="future">
   <div class="container">
-    <span class="eyebrow">12 · Future Plans</span>
+    <span class="eyebrow">09 · Future Plans</span>
     <h2>What we'd do next with more time</h2>
 
     <div class="grid-3" style="margin-top: 24px;">
@@ -2308,13 +2344,9 @@
           for reliable depth that doesn't depend on image-based estimates (box area).</span>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- ════════════ CONCLUSION ════════════ -->
-<section id="conclusion">
-  <div class="container">
-    <span class="eyebrow">13 · Conclusion</span>
+    <div class="embedded-section" id="conclusion">
+    <span class="eyebrow">Supporting · Conclusion</span>
     <h2>What we ended up with</h2>
     <p class="lede">
       We met our primary goal: 30+ seconds of continuous autonomous following at a safe distance,
@@ -2346,15 +2378,14 @@
         </ul>
       </div>
     </div>
+    </div>
   </div>
 </section>
-
-<hr class="section-divider" />
 
 <!-- ════════════ HARDWARE BRIDGES ════════════ -->
 <section id="hardware">
   <div class="container">
-    <span class="eyebrow">14 · Hardware bridges</span>
+    <span class="eyebrow">10 · Real-hardware bridges</span>
     <h2>Utility scripts for the physical Tello</h2>
     <div class="grid-2" style="margin-top: 24px;">
       <div class="card">
@@ -2379,72 +2410,10 @@
   </div>
 </section>
 
-<!-- ════════════ REAL-WORLD IMPACT ════════════ -->
-<section id="impact">
-  <div class="container">
-    <span class="eyebrow">15 · Real-World Impact & Societal Implications</span>
-    <h2>How this extends beyond a class project</h2>
-
-    <h3>Real-world extensions</h3>
-    <p>
-      The core idea — a vision-based follower drone that doesn't need GPS or expensive sensors — could
-      scale in several directions. In <strong>disaster response</strong>, a convoy of follower drones could
-      trail a human-piloted lead drone into areas with no GPS or cell coverage (collapsed buildings,
-      dense forests) and collectively map the scene or relay communications. In <strong>agriculture</strong>,
-      a lead drone flying a survey pattern could have followers at different altitudes carrying different
-      sensors (multispectral, thermal) without needing each one to be independently piloted. In
-      <strong>film and media</strong>, multi-angle drone shots currently require one pilot per drone —
-      a convoy system would let a single cinematographer control the formation.
-    </p>
-    <p>
-      The swappable perception design is also relevant: in real deployments, you might track a
-      vehicle (not a marker or face) using a different detector, but the controller and safety state
-      machine would stay the same.
-    </p>
-
-    <h3 style="margin-top: 32px;">Societal implications</h3>
-    <div class="grid-2" style="margin-top: 16px;">
-      <div class="card">
-        <div class="icon">⚠</div>
-        <h3>Privacy and surveillance</h3>
-        <p>A drone that autonomously follows a person (face mode) raises obvious privacy concerns.
-           Our system deliberately requires the target to opt in (stand in front of the camera
-           to initialize tracking). But in a production system, technical consent mechanisms
-           and clear regulations would be needed to prevent misuse for unauthorized surveillance.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🛡</div>
-        <h3>Safety in shared airspace</h3>
-        <p>Autonomous drones in public spaces need geo-fencing, altitude limits, and collision
-           avoidance with other aircraft. Our system only handles leader-follower safety (land if
-           lost), not airspace deconfliction. Real deployment would require integration with
-           UTM (unmanned traffic management) systems.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🤝</div>
-        <h3>Accessibility</h3>
-        <p>Convoying lowers the skill barrier: instead of training multiple pilots, one operator
-           can manage a fleet. This could make drone technology accessible to smaller organizations
-           (local fire departments, small farms) that can't afford a team of licensed pilots.</p>
-      </div>
-      <div class="card">
-        <div class="icon">⚖</div>
-        <h3>Dual use</h3>
-        <p>Like most autonomous systems, convoy drones could be repurposed for military or
-           law-enforcement applications. The same follow-the-leader capability used for
-           search-and-rescue could be used for tracking individuals without consent. Responsible
-           deployment requires clear use-case restrictions and oversight.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<hr class="section-divider" />
-
 <!-- ════════════ QUICKSTART ════════════ -->
 <section id="run">
   <div class="container">
-    <span class="eyebrow">16 · Quickstart</span>
+    <span class="eyebrow">11 · Quickstart</span>
     <h2>How to run it.</h2>
     <p class="lede">
       Requires Ubuntu 22.04 (or WSL 2 on Windows) + ROS 2 Humble + Gazebo Classic 11.
@@ -2526,13 +2495,23 @@ ros2 launch my_drone_vision tello_face.launch.py
           after sourcing <code>install/setup.bash</code>.</p>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- ════════════ ADDITIONAL MATERIALS ════════════ -->
-<section id="materials">
-  <div class="container">
-    <span class="eyebrow">17 · Additional Materials</span>
+    <div class="embedded-section" id="slides">
+    <span class="eyebrow">Supporting · Final presentation</span>
+    <h2>Our demo-day slides.</h2>
+    <p class="lede">
+      The deck we presented during the final demo session. Click through below or
+      <a href="https://docs.google.com/presentation/d/1LvLhKlG0UQhenk2a5sxfh90NftjuUv4PibATQm_J-_g/edit?usp=sharing" target="_blank" rel="noopener">open in Google Slides&nbsp;→</a>
+    </p>
+    <div style="margin-top: 20px; border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-xl); border: 1px solid rgba(38,37,16,0.08);">
+      <iframe src="https://docs.google.com/presentation/d/1LvLhKlG0UQhenk2a5sxfh90NftjuUv4PibATQm_J-_g/embed?start=false&loop=false&delayms=3000"
+              frameborder="0" width="100%" height="569" allowfullscreen="true"
+              style="display:block;"></iframe>
+    </div>
+    </div>
+
+    <div class="embedded-section" id="materials">
+    <span class="eyebrow">Supporting · Additional materials</span>
     <h2>Links and resources</h2>
     <div class="grid-3" style="margin-top: 24px;">
       <div class="card">
@@ -2551,15 +2530,10 @@ ros2 launch my_drone_vision tello_face.launch.py
         <p><a href="https://docs.google.com/presentation/d/1LvLhKlG0UQhenk2a5sxfh90NftjuUv4PibATQm_J-_g/edit?usp=sharing" target="_blank" rel="noopener">Google Slides</a> — the deck from our final demo session.</p>
       </div>
     </div>
-  </div>
-</section>
+    </div>
 
-<hr class="section-divider" />
-
-<!-- ════════════ AI USAGE ════════════ -->
-<section id="ai-usage">
-  <div class="container">
-    <span class="eyebrow">18 · AI Tools Used</span>
+    <div class="embedded-section" id="ai-usage">
+    <span class="eyebrow">Supporting · AI tools used</span>
     <h2>How we used AI in this project</h2>
     <p class="lede">
       Per course policy, we document all AI tools used during development.
@@ -2590,10 +2564,9 @@ ros2 launch my_drone_vision tello_face.launch.py
       <!-- TODO: add any additional notes about AI usage, e.g. "All AI-generated code was reviewed and tested by the team before merging." -->
       [TODO: additional notes]
     </p>
+    </div>
   </div>
 </section>
-
-<hr class="section-divider" />
 
 <!-- ════════════ FOOTER ════════════ -->
 <footer>
