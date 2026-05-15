@@ -1445,7 +1445,7 @@
   <div class="nav-inner">
     <div class="brand">
       <span class="brand-mark">⌖</span>
-      106A · Drone Convoy
+      106A · Team Drone Convoy
     </div>
     <ul>
       <li><a href="#motivation">Overview</a></li>
@@ -1473,7 +1473,7 @@
     <span class="hero-pill"><span class="live-dot"></span> EECS / BioE / ME C106A · Spring 2026 · Final Project Report</span>
     <h1 class="title">Autonomous Safe<br/>Drone Convoy<br/>Following</h1>
     <p class="hero-sub">
-      Convoy technology: one operator controls a leading target while the followers autonomously follow and perform tasks. In this project, we built a ROS 2 convoy system around DJI drones that turns live camera frames into safe flight commands — implementing the ArUco / solvePnP / YOLOv8 face tracking → pose estimation → PD-smoothed <code>/cmd_vel</code> → Tello RC → recovery → safe-land pipeline.
+      Convoy technology is the technology that while one operator controls a leading target, the followers autonomously follow and perform tasks. In this project, we built a ROS 2 convoy system around DJI drones that turns live camera frames into safe flight commands — implementing the ArUco / solvePnP / YOLOv8 face tracking → pose estimation → PD-smoothed <code>/cmd_vel</code> → Tello RC → recovery → safe-land pipeline.
     </p>
     <div class="hero-pills">
       <span class="pill aruco">ArUco Tag</span>
@@ -1558,6 +1558,28 @@
       </div>
     </div>
 
+  </div>
+</section>
+
+<hr class="section-divider" />
+
+<!-- ════════════ REAL-WORLD IMPACT ════════════ -->
+<section id="impact">
+  <div class="container">
+    <span class="eyebrow">03 · Motivation</span>
+    <h2>How this extends beyond a class project</h2>
+
+    <h3>Real-world extensions</h3>
+    <p>
+      The design of vision-based follower drone that doesn't need GPS or expensive sensors could be able to
+      scale in several directions. For example, In <strong>disaster response</strong>, a convoy of follower drones could
+      trail a human-piloted lead drone into areas with no GPS or cell coverage and collectively map the scene or relay communications. In <strong>agriculture</strong>,
+      a lead drone flying a survey pattern could have followers at different altitudes carrying different
+      sensors (multispectral, thermal) without needing each one to be independently piloted. In
+      <strong>film and media</strong>, multi-angle drone shots currently require one pilot per drone, but
+      a convoy system would let a single cinematographer control the formation. The development of convoying capabilities could unlock new applications and reduce costs in any domain where multiple drones are useful but full autonomy is too risky or expensive.
+    </p>
+
     <h3 style="margin-top: 48px;">Where this kind of system is useful in the real world</h3>
     <div class="grid-3" style="margin-top: 16px;">
       <div class="card">
@@ -1575,62 +1597,6 @@
         <h3>Warehouse & delivery</h3>
         <p> As in the large warehouses or campus delivery situations, the convoying system allows a fleet of drones to follow a lead vehicle (ground or air) along a route, each carrying a different package. One operator can handle the whole fleet, reducing the need for multiple pilots and enabling more efficient logistics operations.
         </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<hr class="section-divider" />
-
-<!-- ════════════ REAL-WORLD IMPACT ════════════ -->
-<section id="impact">
-  <div class="container">
-    <span class="eyebrow">03 · Motivation</span>
-    <h2>How this extends beyond a class project</h2>
-
-    <h3>Real-world extensions</h3>
-    <p>
-      The design of vision-based follower drone that doesn't need GPS or expensive sensors could be able to 
-      scale in several directions. For example, In <strong>disaster response</strong>, a convoy of follower drones could
-      trail a human-piloted lead drone into areas with no GPS or cell coverage and collectively map the scene or relay communications. In <strong>agriculture</strong>,
-      a lead drone flying a survey pattern could have followers at different altitudes carrying different
-      sensors (multispectral, thermal) without needing each one to be independently piloted. In
-      <strong>film and media</strong>, multi-angle drone shots currently require one pilot per drone, but
-      a convoy system would let a single cinematographer control the formation. The development of convoying capabilities could unlock new applications and reduce costs in any domain where multiple drones are useful but full autonomy is too risky or expensive.
-    </p>
-
-    <h3 style="margin-top: 32px;">Societal implications</h3>
-    <div class="grid-2" style="margin-top: 16px;">
-      <div class="card">
-        <div class="icon">⚠</div>
-        <h3>Privacy and surveillance</h3>
-        <p>A drone that autonomously follows a person (face mode) raises obvious privacy concerns.
-           Our system deliberately requires the target to opt in (stand in front of the camera
-           to initialize tracking). But in a production system, technical consent mechanisms
-           and clear regulations would be needed to prevent misuse for unauthorized surveillance.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🛡</div>
-        <h3>Safety in shared airspace</h3>
-        <p>Autonomous drones in public spaces need geo-fencing, altitude limits, and collision
-           avoidance with other aircraft. Our system only handles leader-follower safety (land if
-           lost), not airspace deconfliction. Real deployment would require integration with
-           UTM (unmanned traffic management) systems.</p>
-      </div>
-      <div class="card">
-        <div class="icon">🤝</div>
-        <h3>Accessibility</h3>
-        <p>Convoying lowers the skill barrier: instead of training multiple pilots, one operator
-           can manage a fleet. This could make drone technology accessible to smaller organizations
-           (local fire departments, small farms) that can't afford a team of licensed pilots.</p>
-      </div>
-      <div class="card">
-        <div class="icon">⚖</div>
-        <h3>Dual use</h3>
-        <p>Like most autonomous systems, convoy drones could be repurposed for military or
-           law-enforcement applications. The same follow-the-leader capability used for
-           search-and-rescue could be used for tracking individuals without consent. Responsible
-           deployment requires clear use-case restrictions and oversight.</p>
       </div>
     </div>
   </div>
