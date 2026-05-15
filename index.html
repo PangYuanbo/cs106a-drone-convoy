@@ -130,6 +130,10 @@
     font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
     color: var(--muted-stone); font-weight: 500;
     margin-bottom: 12px;
+    /* Optical alignment: mono font's left side-bearing is wider than the
+       sans-serif H2's, so we pull the eyebrow ~2px left to make the visible
+       first character flush with the H2 below. */
+    margin-left: -2px;
   }
   h1, h2, h3 { color: var(--deep-shadow); font-weight: 500; letter-spacing: -0.02em; }
   h2 { font-size: clamp(28px, 3.4vw, 44px); line-height: 1.1; margin: 0 0 16px;
@@ -1609,11 +1613,7 @@
 <section id="demos">
   <div class="container">
     <span class="eyebrow">04 · Results / Demo Videos</span>
-    <h2>Results:</h2>
-    <p class="lede">
-      All three demos run the same perception → control pipeline, just in different environments.
-    </p>
-
+    <h2>Results</h2>
     <!-- Demo 1 -->
     <div class="demo-block">
       <span class="demo-tag"><span class="live-dot"></span>Demo 01 · Sim · Checkpoint 1</span>
