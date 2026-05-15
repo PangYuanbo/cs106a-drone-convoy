@@ -382,48 +382,80 @@ p.lede { color: var(--muted-stone); font-size: 17px; line-height: 1.55; max-widt
 
 ---
 
-## 8 · Centering section content (Morphing-Matter-style)
+## 8 · Centering policy · one-liners center, multi-lines stay left
 
-**Applied · live in the file.** Inserted at **`index.html:142–169`**, right after the `strong` rule and before `hr.section-divider`.
+**Applied · live in the file.** Lives at **`index.html:142–180`**, right after the `strong` rule and before `hr.section-divider`.
 
-### What the rule does
+### The rule, in one sentence
+
+> **One-liners get centered. Multi-line text never does.**
+
+Why: centered multi-line paragraphs create ragged left edges that hurt scannability. Centered short labels (eyebrow, section titles, demo tags) look intentional and Morphing-Matter-clean.
+
+### What the CSS does
 
 ```css
-section { text-align: center; }
-section h2,
-section h3,
-section p,
-section p.lede {
-  margin-left: auto;
-  margin-right: auto;
+section { text-align: center; }                     /* default: center inline content */
+
+section h2, section h3 {
+  margin-left: auto; margin-right: auto;            /* center the heading BLOCK */
+}
+
+section p, section p.lede {
+  text-align: left;                                 /* paragraphs stay left-aligned */
+  /* no margin: auto — block sits flush-left in its container */
+}
+
+/* Scan-heavy blocks stay left-aligned end-to-end */
+section .card, section .team-card, section .issue-card, section .future-card,
+section .video-card, section .video-meta,
+section .pipeline, section .pipeline-stage, section .cursor-desktop,
+section .code-window, section .table-wrap, section .state, section .dual-arch,
+section table, section pre, section ul, section ol {
+  text-align: left;
 }
 ```
 
-`text-align: center` centers any inline content (the eyebrow, raw text, inline elements). The `margin: auto` lines center the **block-level** elements (H2, H3, P) on the page, since each of them has a `max-width` smaller than the container. Without `margin: auto`, blocks would still sit flush-left even with `text-align: center` set on the parent.
+### What this means concretely on the page
 
-### What gets protected (stays left-aligned)
+| Element | Centered? | Why |
+|---|---|---|
+| `.eyebrow` (e.g. "02 · Introduction") | ✓ centered | one-liner, inline-block, picks up `text-align: center` from parent |
+| `<h2>` (section titles, e.g. "The safety state machine") | ✓ centered | one-liner; `margin: 0 auto` centers the block |
+| Free `<h3>` (e.g. "Our Objectives", "Where this kind of system…") | ✓ centered | one-liner |
+| `.demo-tag` ("Demo 01 · Sim · Checkpoint 1") | ✓ centered | one-liner span |
+| `.demo-block h3` ("Gazebo simulation.") | ✓ centered | one-liner |
+| `<p>` body ("Convoying in robotics is defined as…") | ✗ left | multi-line — would go ragged if centered |
+| `<p class="lede">` ("All three demos run the same…") | ✗ left | multi-line lede |
+| Card internals (Hardware, Goal, Success bar, team cards…) | ✗ left | scan-heavy bullet content; cards are left-aligned end-to-end |
+| `.video-meta` ("Source:", "Tracking topic:", "Trajectory:") | ✗ left | multi-line key/value list |
+| `.state` (IDLE / ARM / FOLLOW / SEARCH / LAND boxes) | ✗ left | uniform left margin reads as a row |
 
-Cards, tables, code blocks, demo videos, the pipeline diagram, the state machine row, and lists are explicitly reset back to `text-align: left`. Reason: scanning a card's bullet list or reading a code block is much harder when each line is centered. Morphing Matter does the same — centered titles, left-aligned card internals.
+### Mental model for future edits
 
-The selectors that get reset:
+- **Is it a one-line title, tag, or eyebrow?** → centered.
+- **Will it wrap to 2+ lines on most screens?** → left-aligned.
 
+If you find an exception (a one-line label that's stuck left because its parent is in the reset list), the fix is one of:
+1. Remove its parent from the reset list (centers everything in that container)
+2. Or add a more specific rule that re-centers just that one element, e.g. `section .state .num { text-align: center; }`
+
+### How to back out completely
+
+Delete L142–L180 from `index.html`. Page reverts to flat left-aligned.
+
+### How to also center card titles (if you change your mind)
+
+Card titles (`.card h3` like "Hardware", "Goal") are currently left-aligned because the whole card is in the reset. To center just the card's h3:
+
+```css
+section .card h3 { text-align: center; }
 ```
-.card, .team-card, .issue-card, .future-card,
-.video-card, .demo-block, .pipeline, .pipeline-stage,
-.cursor-desktop, .code-window, .table-wrap, .state,
-.dual-arch, table, pre, ul, ol
-```
 
-### How to back this out
+Add that after the reset block.
 
-Delete L142–L169 from `index.html`. Everything reverts to left-aligned (the old default).
+### Quick toggle in DevTools
 
-### How to go further (center card internals too)
-
-If you decide you want even card text centered, remove or shorten the `section .card, …` reset block. Be warned: bullet lists with the bullets centered look strange (the bullets misalign with the text). For lists specifically, leave `ul, ol` in the reset.
-
-### Quick toggle
-
-If you want to compare side-by-side, comment the whole block out in DevTools by clicking the checkboxes next to each rule in the Styles panel. You can re-enable in one click without re-editing the file.
+Open DevTools → Elements → Styles panel → uncheck the rules to compare. Re-enable with one click without touching the file.
 
 
