@@ -1432,70 +1432,70 @@
 <section id="motivation">
   <div class="container">
     <span class="eyebrow">02 · Introduction</span>
-    <h2>Why drone convoying, and why it matters</h2>
+    <h2>Why we tried drone convoying</h2>
     <div class="grid-2" style="margin-top: 24px;">
       <div>
         <p class="lede">
-          Convoying — having one operator control a lead vehicle while followers tag along
-          autonomously — is already common for ground vehicles (think truck platooning on
-          highways). For drones, though, it's barely been explored. We think it's useful in
-          scenarios where full autonomy is too risky, like inspection, search-and-rescue, or
-          warehouse logistics.
+          We started from a simple question: if one person can already fly a lead drone,
+          can a second low-cost drone follow it without needing another pilot? That felt
+          more realistic than trying to solve full autonomy in one semester, and it gave
+          us a concrete problem to test: keep visual lock, stay at a safe distance, and
+          fail in a predictable way when the target disappears.
         </p>
         <p>
-          We built a prototype on the cheapest hardware we could find:
-          a $100 Tello drone (self-funded) with a 720p / 30 fps camera, a laptop
-          running ROS 2 Humble as the base station, and Wi-Fi for everything.
+          The hardware also forced the project to stay honest. We used a self-funded
+          $100 Tello, its built-in 720p camera, a laptop running ROS 2 Humble, and Wi-Fi
+          for both video and control. No depth camera, no GPS, no onboard computer.
         </p>
       </div>
       <div class="card">
-        <div class="icon">⌬</div>
+        <div class="icon">*</div>
         <h3>Hardware</h3>
         <ul class="tight">
-          <li><strong>DJI Tello</strong> · $100 (self-funded)</li>
-          <li><strong>Camera</strong> · 720p, 30 fps</li>
-          <li><strong>Compute</strong> · base-station laptop, perception off-board</li>
-          <li><strong>Network</strong> · Tello UDP RC + H.264 video over Wi-Fi</li>
-          <li><strong>OS</strong> · ROS 2 Humble (Ubuntu 22.04 / WSL on Windows)</li>
+          <li><strong>DJI Tello</strong> - $100 (self-funded)</li>
+          <li><strong>Camera</strong> - 720p, 30 fps</li>
+          <li><strong>Compute</strong> - base-station laptop, perception off-board</li>
+          <li><strong>Network</strong> - Tello UDP RC + H.264 video over Wi-Fi</li>
+          <li><strong>OS</strong> - ROS 2 Humble (Ubuntu 22.04 / WSL on Windows)</li>
         </ul>
       </div>
     </div>
 
-    <h3 style="margin-top: 48px;">Aim · autonomous following with safe failure modes.</h3>
+    <h3 style="margin-top: 48px;">Aim: follow autonomously, but fail safely.</h3>
     <div class="grid-3" style="margin-top: 16px;">
       <div class="card">
-        <div class="icon">◎</div>
+        <div class="icon">1</div>
         <h3>Goal</h3>
-        <p>Stable moderate-speed following using ArUco markers, with safe-landing protocols if the visual lock is lost.</p>
+        <p>Use an ArUco marker as the first target and make the follower hold position behind it at moderate speed.</p>
       </div>
       <div class="card">
-        <div class="icon">✓</div>
+        <div class="icon">2</div>
         <h3>Success bar</h3>
-        <p><strong>30 s of continuous autonomous tracking</strong> — maintaining a safe distance the entire time.</p>
+        <p><strong>30 s of continuous autonomous tracking</strong>, without drifting into the leader or needing manual correction.</p>
       </div>
       <div class="card">
-        <div class="icon">↗</div>
+        <div class="icon">3</div>
         <h3>Stretch</h3>
-        <p>Anticipate target acceleration · reacquire after temporary occlusion · extend perception swap to face / person tracking.</p>
+        <p>Try a second perception mode and see whether the same controller can still work when the target is a face instead of a tag.</p>
       </div>
     </div>
 
-    <h3 style="margin-top: 48px;">Where this kind of system is useful in the real world</h3>
+    <h3 style="margin-top: 48px;">Why this problem seemed worth testing</h3>
     <div class="grid-3" style="margin-top: 16px;">
       <div class="card">
-        <div class="icon">🔍</div>
+        <div class="icon">1</div>
         <h3>Search & rescue</h3>
-        <p>After earthquakes or floods, a human operator can fly a lead drone while follower drones spread out to cover more ground with cameras and thermal sensors — without needing a pilot per drone.</p>
+        <p>In a search scenario, the lead drone could stay under direct human control while a follower records another view. That keeps a person in the loop but still increases coverage.</p>
       </div>
       <div class="card">
-        <div class="icon">🏗</div>
+        <div class="icon">2</div>
         <h3>Infrastructure inspection</h3>
-        <p>Bridges, power lines, pipelines — an inspector flies the lead drone along the structure, and followers record from different angles automatically. Cuts crew size and keeps people away from dangerous spots.</p>
+        <p>For bridges or power lines, the interesting part is not replacing the inspector. It is letting one pilot collect a second camera angle without coordinating another person.</p>
       </div>
       <div class="card">
-        <div class="icon">📦</div>
+        <div class="icon">3</div>
         <h3>Warehouse & delivery</h3>
-        <p>In large warehouses or campus delivery, a convoy of drones can follow a lead vehicle (ground or air) along a route, each carrying a different package. One operator handles the whole fleet.</p>
+        <p>In indoor or campus settings, GPS is not reliable anyway. A visual follower could trail a known vehicle or marker along a route, as long as the environment is controlled.</p>
       </div>
     </div>
   </div>
@@ -1507,34 +1507,34 @@
 <section id="design">
   <div class="container">
     <span class="eyebrow">03 · Design</span>
-    <h2>What we needed, what we picked, and the trade-offs</h2>
+    <h2>Design choices we had to make</h2>
 
-    <h3>Design criteria</h3>
-    <p>For our system to be useful, it had to meet these requirements:</p>
+    <h3>What mattered for this build</h3>
+    <p>We kept coming back to a few constraints while testing, because the Tello does not forgive much.</p>
     <div class="grid-2" style="margin-top: 16px;">
       <div class="card">
-        <div class="icon">①</div>
-        <h3>Stable following at safe distance</h3>
-        <p>The follower drone must maintain roughly 1.5 m behind the leader without overshooting or oscillating into it. Collision = broken drone = failed project.</p>
+        <div class="icon">1</div>
+        <h3>Do not chase too aggressively</h3>
+        <p>The follower had to stay around 1.5 m back. When the gains were too high, the drone looked responsive for a second and then started overshooting.</p>
       </div>
       <div class="card">
-        <div class="icon">②</div>
-        <h3>Graceful failure</h3>
-        <p>If the drone loses sight of the target, it should not fly off randomly. It needs to hover, scan, and land safely if it can't re-acquire.</p>
+        <div class="icon">2</div>
+        <h3>Have a boring failure mode</h3>
+        <p>If the marker disappeared, the safest behavior was not clever recovery. It was hover first, scan slowly, and land if the target did not come back.</p>
       </div>
       <div class="card">
-        <div class="icon">③</div>
-        <h3>Swappable perception</h3>
-        <p>We wanted at least two tracking modes (ArUco marker and face) that share the same controller, so we can switch without rewriting control code.</p>
+        <div class="icon">3</div>
+        <h3>Keep perception swappable</h3>
+        <p>We wanted to test ArUco and face tracking without rewriting the controller each time, so both modes publish the same kind of target estimate.</p>
       </div>
       <div class="card">
-        <div class="icon">④</div>
-        <h3>Run on cheap hardware</h3>
-        <p>We had a $100 Tello and a laptop. No Jetson, no RTK GPS, no LiDAR. Everything has to work over Wi-Fi with a 720p camera.</p>
+        <div class="icon">4</div>
+        <h3>Stay within cheap hardware</h3>
+        <p>The laptop did all perception, and every command still had to travel over Wi-Fi. That constraint shaped almost every design decision.</p>
       </div>
     </div>
 
-    <h3 style="margin-top: 36px;">Key design choices and trade-offs</h3>
+    <h3 style="margin-top: 36px;">Trade-offs we made</h3>
     <div class="table-wrap" style="margin-top: 16px;">
       <table>
         <thead>
@@ -1545,52 +1545,52 @@
             <td>Compute location</td>
             <td><strong>Off-board</strong> (laptop)</td>
             <td>On-board (Jetson)</td>
-            <td>Tello has no companion-computer port. We send video over Wi-Fi and run perception on the laptop.</td>
+            <td>The Tello gave us video and UDP control, but no easy companion-computer setup. Running perception on the laptop was slower over Wi-Fi, but actually buildable.</td>
           </tr>
           <tr>
             <td>Primary tracker</td>
             <td><strong>ArUco marker</strong></td>
             <td>Full-body pose / GPS</td>
-            <td>ArUco gives 6-DoF metric pose from a single cheap camera with OpenCV — no training data, no GPS.</td>
+            <td>ArUco gave us metric pose from one camera and made debugging easier. It is artificial, but it was the right first target for proving the control loop.</td>
           </tr>
           <tr>
             <td>Controller</td>
             <td><strong>PD + low-pass filter</strong></td>
             <td>PID / MPC</td>
-            <td>PD is simple and good enough at low speed. The low-pass filter handles noisy pose estimates. Adding I-term caused wind-up issues on the Tello.</td>
+            <td>PID looked tempting, but the integral term made the drone hold onto old error after delays. A filtered PD controller was easier to tune and easier to trust indoors.</td>
           </tr>
           <tr>
             <td>Communication</td>
             <td><strong>ROS 2 topics</strong></td>
             <td>Custom sockets</td>
-            <td>ROS 2 gives us pub/sub, launch files, and easy node swapping. Standard in robotics courses and industry.</td>
+            <td>ROS 2 made the sim and real pipeline use the same interfaces. We still had to keep the actual Tello UDP I/O in one place to avoid timing problems.</td>
           </tr>
           <tr>
             <td>Face tracking</td>
             <td><strong>YOLOv8 + Haar fallback</strong></td>
             <td>MediaPipe / dlib</td>
-            <td>YOLOv8 is fast and accurate. Haar cascade is a lightweight backup when YOLO drops a frame.</td>
+            <td>YOLOv8 worked well enough for the stretch demo. The face mode was less precise than ArUco, so we treated it as a controller-interface test rather than a perfect tracker.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <h3 style="margin-top: 36px;">How these choices affect real-world engineering qualities</h3>
+    <h3 style="margin-top: 36px;">What these choices changed in practice</h3>
     <div class="grid-3" style="margin-top: 16px;">
       <div class="card">
-        <div class="icon">⛑</div>
-        <h3>Robustness</h3>
-        <p>The five-state safety machine means the drone always has a defined behavior, even when things go wrong. Lost the target? Hover and scan. Still lost after 5 seconds? Land. No undefined states.</p>
+        <div class="icon">1</div>
+        <h3>Safer behavior</h3>
+        <p>The state machine was less exciting than adding smarter prediction, but it made testing less stressful. When tracking failed, we could predict what the drone would do next.</p>
       </div>
       <div class="card">
-        <div class="icon">⚡</div>
-        <h3>Efficiency</h3>
-        <p>ArUco detection runs at 30 Hz on a laptop CPU — no GPU needed. PD control is a few multiplications per cycle. The whole pipeline fits in the Tello's ~15-minute battery window.</p>
+        <div class="icon">2</div>
+        <h3>Fast enough perception</h3>
+        <p>ArUco detection ran comfortably on the laptop CPU. The harder part was not raw compute; it was delay and dropped frames from the Tello video stream.</p>
       </div>
       <div class="card">
-        <div class="icon">🔧</div>
-        <h3>Maintainability</h3>
-        <p>Because perception and control are separate ROS nodes, we can swap in a new tracker (e.g., LiDAR-based) without touching the controller. Each node is a single Python file under 200 lines.</p>
+        <div class="icon">3</div>
+        <h3>Easier iteration</h3>
+        <p>Keeping perception and control separated let us swap the target source without changing the control loop. That saved time when moving from the marker demo to face tracking.</p>
       </div>
     </div>
   </div>
@@ -2216,54 +2216,38 @@
 <section id="failures">
   <div class="container">
     <span class="eyebrow">11 · Difficulties &amp; Fixes</span>
-    <h2>Problems we ran into and how we fixed them</h2>
+    <h2>What actually gave us trouble</h2>
 
     <div class="grid-3" style="margin-top: 24px;">
       <div class="issue-card">
-        <span class="num">▲ 01</span>
-        <span class="head">Wi-Fi drops &amp; network latency</span>
-        <span class="fix">Switched from Docker to <strong>WSL on Windows</strong> so the
-          Tello UDP socket maps directly through the host. Added a four-tier staleness
-          policy: fresh → &lt;150 ms replay → 150–600 ms decay (×0.95) → &gt;600 ms hover → &gt;5 s land.
-          RC commands rate-limited to 10 Hz, above the Tello's 15-second safety watchdog.</span>
+        <span class="num">01</span>
+        <span class="head">Wi-Fi drops and network latency</span>
+        <span class="fix">At first the drone would respond, then suddenly lag behind the tag. Moving the real-flight setup from Docker to <strong>WSL on Windows</strong> helped because the Tello UDP socket mapped more directly through the host. We also added staleness handling: fresh, short replay, decay, hover, then land.</span>
       </div>
       <div class="issue-card">
-        <span class="num">▲ 02</span>
+        <span class="num">02</span>
         <span class="head">ArUco pose flicker</span>
-        <span class="fix">Added EMA smoothing (α = 0.4) on the translation component
-          of the pose. Worked well enough that we didn't need a full Kalman filter.</span>
+        <span class="fix">The marker pose jumped even when the tag was almost still. EMA smoothing (alpha = 0.4) on translation was enough for our speed range, so we did not add a Kalman filter.</span>
       </div>
       <div class="issue-card">
-        <span class="num">▲ 03</span>
-        <span class="head">Sudden tracking errors</span>
-        <span class="fix">PD control with a low-pass filter on the derivative term
-          cleans up noisy pose estimates before they reach the actuator. Deadbands
-          and clipped safe speeds prevent jittery commands.</span>
+        <span class="num">03</span>
+        <span class="head">Commands became twitchy</span>
+        <span class="fix">Derivative noise showed up as sudden actuator commands. We filtered the derivative term, added small deadbands, and clipped speeds so one bad pose estimate could not turn into a large motion.</span>
       </div>
       <div class="issue-card">
-        <span class="num">▲ 04</span>
-        <span class="head">Sub-second occlusions</span>
-        <span class="fix">Three-substate search machine: <strong>IDLE</strong> (staleness
-          tiers handle hover), <strong>SEARCH</strong> (slow yaw at 0.25 rad/s for up to 8 s,
-          sweeping ~115° per side), <strong>COOLDOWN</strong> (search timed out, wait for
-          tag return or trigger 5 s land timer).</span>
+        <span class="num">04</span>
+        <span class="head">Short occlusions were common</span>
+        <span class="fix">People walking through the frame or the tag turning away would break detection for a moment. The search state yaw-scans slowly at 0.25 rad/s for up to 8 s, then waits in cooldown or lands if the target stays missing.</span>
       </div>
       <div class="issue-card">
-        <span class="num">▲ 05</span>
-        <span class="head">Multi-node Tello I/O latency</span>
-        <span class="fix">Single-owner pattern: only <code>tello_direct_io_node</code>
-          opens Tello SDK/UDP ports. Controller stays "pure ROS" — just publishes
-          <code>/cmd_vel</code> and calls <code>/tello_action</code>. A
-          <code>command_lock</code> serializes sends; non-blocking lock acquisition
-          drops overlapping high-rate commands instead of queueing them.</span>
+        <span class="num">05</span>
+        <span class="head">Too many nodes wanted the Tello</span>
+        <span class="fix">Letting multiple pieces touch Tello I/O made timing harder to reason about. We moved to a single-owner pattern: <code>tello_direct_io_node</code> owns SDK/UDP, while the controller only publishes <code>/cmd_vel</code> and calls <code>/tello_action</code>.</span>
       </div>
       <div class="issue-card">
-        <span class="num">▲ 06</span>
-        <span class="head">Inconsistent video stream</span>
-        <span class="fix">Collapsed the separate <code>aruco_detector</code> node into
-          a single in-process node that reads the Tello frame and runs detection inline.
-          Eliminates ROS topic transport overhead, serialization, scheduling jitter, and
-          memory copies. Uses DJITelloPy for simpler UDP handling.</span>
+        <span class="num">06</span>
+        <span class="head">Video transport was not free</span>
+        <span class="fix">The separate detector node looked clean in ROS, but the extra transport and scheduling overhead hurt the real drone path. Collapsing frame read and ArUco detection into one process made the stream more consistent.</span>
       </div>
     </div>
   </div>
@@ -2382,58 +2366,45 @@
 <!-- ════════════ REAL-WORLD IMPACT ════════════ -->
 <section id="impact">
   <div class="container">
-    <span class="eyebrow">15 · Real-World Impact & Societal Implications</span>
-    <h2>How this extends beyond a class project</h2>
+    <span class="eyebrow">15 - Real-World Impact & Societal Implications</span>
+    <h2>What this project suggests, and what it does not solve</h2>
 
     <h3>Real-world extensions</h3>
     <p>
-      The core idea — a vision-based follower drone that doesn't need GPS or expensive sensors — could
-      scale in several directions. In <strong>disaster response</strong>, a convoy of follower drones could
-      trail a human-piloted lead drone into areas with no GPS or cell coverage (collapsed buildings,
-      dense forests) and collectively map the scene or relay communications. In <strong>agriculture</strong>,
-      a lead drone flying a survey pattern could have followers at different altitudes carrying different
-      sensors (multispectral, thermal) without needing each one to be independently piloted. In
-      <strong>film and media</strong>, multi-angle drone shots currently require one pilot per drone —
-      a convoy system would let a single cinematographer control the formation.
+      The useful part of our system is not that a $100 Tello is ready for real deployment.
+      It is the control pattern: a human keeps authority over the lead vehicle, while a
+      follower uses vision to maintain a relative position. That could matter in places
+      where GPS is weak or where full autonomy is overkill, such as indoor inspection,
+      classroom demos, or controlled search exercises.
     </p>
     <p>
-      The swappable perception design is also relevant: in real deployments, you might track a
-      vehicle (not a marker or face) using a different detector, but the controller and safety state
-      machine would stay the same.
+      The project also showed where the idea breaks down. Wi-Fi delay, lighting changes,
+      and depth estimates from a single camera all made the real drone less clean than the
+      simulation. A serious version would need better sensing, obstacle avoidance, and a
+      more reliable compute setup before it should be flown around people.
     </p>
 
     <h3 style="margin-top: 32px;">Societal implications</h3>
     <div class="grid-2" style="margin-top: 16px;">
       <div class="card">
-        <div class="icon">⚠</div>
-        <h3>Privacy and surveillance</h3>
-        <p>A drone that autonomously follows a person (face mode) raises obvious privacy concerns.
-           Our system deliberately requires the target to opt in (stand in front of the camera
-           to initialize tracking). But in a production system, technical consent mechanisms
-           and clear regulations would be needed to prevent misuse for unauthorized surveillance.</p>
+        <div class="icon">1</div>
+        <h3>Consent matters</h3>
+        <p>Face following is convenient for a demo, but it is also the mode that feels most sensitive. In our tests the target had to intentionally stand in front of the drone, but that is not a strong consent mechanism outside a lab.</p>
       </div>
       <div class="card">
-        <div class="icon">🛡</div>
-        <h3>Safety in shared airspace</h3>
-        <p>Autonomous drones in public spaces need geo-fencing, altitude limits, and collision
-           avoidance with other aircraft. Our system only handles leader-follower safety (land if
-           lost), not airspace deconfliction. Real deployment would require integration with
-           UTM (unmanned traffic management) systems.</p>
+        <div class="icon">2</div>
+        <h3>Safety is still narrow</h3>
+        <p>Our safety logic handles target loss, not the rest of shared airspace. It does not avoid people, walls, or other aircraft, so the system should be read as a follower prototype rather than a deployable autonomy stack.</p>
       </div>
       <div class="card">
-        <div class="icon">🤝</div>
-        <h3>Accessibility</h3>
-        <p>Convoying lowers the skill barrier: instead of training multiple pilots, one operator
-           can manage a fleet. This could make drone technology accessible to smaller organizations
-           (local fire departments, small farms) that can't afford a team of licensed pilots.</p>
+        <div class="icon">3</div>
+        <h3>Lower barrier, mixed effects</h3>
+        <p>One operator controlling a small fleet could help small teams collect more data. It could also make surveillance easier if the same idea is used without consent or oversight.</p>
       </div>
       <div class="card">
-        <div class="icon">⚖</div>
-        <h3>Dual use</h3>
-        <p>Like most autonomous systems, convoy drones could be repurposed for military or
-           law-enforcement applications. The same follow-the-leader capability used for
-           search-and-rescue could be used for tracking individuals without consent. Responsible
-           deployment requires clear use-case restrictions and oversight.</p>
+        <div class="icon">4</div>
+        <h3>Human-in-the-loop is not a full answer</h3>
+        <p>Keeping a person on the lead drone helps, but it does not remove responsibility from the system designer. The follower still needs clear limits, predictable failure behavior, and logs that make mistakes diagnosable.</p>
       </div>
     </div>
   </div>
