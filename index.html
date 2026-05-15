@@ -53,7 +53,7 @@
 
     /* Layout */
     --page-max: 1240px;
-    --section-gap: 96px;
+    --section-gap: 56px;
   }
 
   * { box-sizing: border-box; }
@@ -138,6 +138,38 @@
   p { color: var(--inkwell); max-width: 720px; margin: 0 0 12px; }
   p.lede { color: var(--muted-stone); font-size: 17px; line-height: 1.55; max-width: 720px; }
   strong { color: var(--deep-shadow); font-weight: 600; }
+
+  /* ── Morphing-Matter-style center column · headings + leads centered,
+        but card/table/code internals stay left-aligned for readability ── */
+  section { text-align: center; }
+  section h2,
+  section h3,
+  section p,
+  section p.lede {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* protect scan-heavy blocks from inheriting center alignment */
+  section .card,
+  section .team-card,
+  section .issue-card,
+  section .future-card,
+  section .video-card,
+  section .demo-block,
+  section .pipeline,
+  section .pipeline-stage,
+  section .cursor-desktop,
+  section .code-window,
+  section .table-wrap,
+  section .state,
+  section .dual-arch,
+  section table,
+  section pre,
+  section ul,
+  section ol {
+    text-align: left;
+  }
+
   hr.section-divider {
     border: 0; border-top: 1px solid rgba(38, 37, 16, 0.08);
     margin: 0; max-width: var(--page-max); margin-left: auto; margin-right: auto;
@@ -1608,7 +1640,7 @@
 <section id="demos">
   <div class="container">
     <span class="eyebrow">04 · Results / Demo Videos</span>
-    <h2>Demo videos</h2>
+    <h2>Results:</h2>
     <p class="lede">
       All three demos run the same perception → control pipeline, just in different environments.
     </p>
