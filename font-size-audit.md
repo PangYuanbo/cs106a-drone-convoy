@@ -384,7 +384,9 @@ p.lede { color: var(--muted-stone); font-size: 17px; line-height: 1.55; max-widt
 
 ## 8 · Centering policy · one-liners center, multi-lines stay left
 
-**Applied · live in the file.** Lives at **`index.html:142–180`**, right after the `strong` rule and before `hr.section-divider`.
+**Status: REVERTED.** The page is back to the original left-aligned layout. The CSS block described below is no longer in `index.html` — left here as a recipe in case you want to bring it back later.
+
+To re-apply, paste the CSS block at the bottom of this section into `index.html` right after the `strong { ... }` rule (around L141).
 
 ### The rule, in one sentence
 

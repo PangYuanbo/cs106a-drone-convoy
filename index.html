@@ -139,45 +139,6 @@
   p.lede { color: var(--muted-stone); font-size: 17px; line-height: 1.55; max-width: 720px; }
   strong { color: var(--deep-shadow); font-weight: 600; }
 
-  /* ── Centering policy: one-liners center, multi-lines stay left.
-        Centered multi-line paragraphs create ragged left edges that
-        kill scannability — so only headings and inline labels center. ── */
-  section { text-align: center; }
-  section h2,
-  section h3 {
-    margin-left: auto;
-    margin-right: auto;
-  }
-  /* Multi-line text always reads left-aligned, regardless of where it sits. */
-  section p,
-  section p.lede {
-    text-align: left;
-    /* no margin: auto — paragraphs sit flush-left in their container */
-  }
-  /* Card / table / code / multi-line meta blocks stay left-aligned. */
-  section .card,
-  section .team-card,
-  section .issue-card,
-  section .future-card,
-  section .video-card,
-  section .video-meta,
-  section .pipeline,
-  section .pipeline-stage,
-  section .cursor-desktop,
-  section .code-window,
-  section .table-wrap,
-  section .state,
-  section .dual-arch,
-  section table,
-  section pre,
-  section ul,
-  section ol {
-    text-align: left;
-  }
-  /* Demo-block titles (`.demo-tag` + `<h3>`) ARE one-liners — they center.
-     The body `<p>` inside is caught by `section p` above and stays left.
-     The `.video-card` and `.video-meta` are caught by the reset above. */
-
   hr.section-divider {
     border: 0; border-top: 1px solid rgba(38, 37, 16, 0.08);
     margin: 0; max-width: var(--page-max); margin-left: auto; margin-right: auto;
@@ -2640,28 +2601,6 @@ ros2 launch my_drone_vision tello_face.launch.py
         </div>
       </div>
     </div>
-
-    <h3 style="margin-top: 36px;">Common gotchas</h3>
-    <div class="grid-3" style="margin-top: 12px;">
-      <div class="card">
-        <div class="icon">!</div>
-        <h3>Address already in use</h3>
-        <p>A leftover Gazebo process is still bound:<br/>
-          <code>pkill -f "gazebo|gzserver|gzclient"</code></p>
-      </div>
-      <div class="card">
-        <div class="icon">↕</div>
-        <h3>Marker won't move on z</h3>
-        <p>Gazebo is using an old model with <code>planar_move</code>. Restart Gazebo
-          and confirm the model comes from this repo.</p>
-      </div>
-      <div class="card">
-        <div class="icon">×</div>
-        <h3>No marker / face detected</h3>
-        <p>Check the camera topic has data, and that the perception node was started
-          after sourcing <code>install/setup.bash</code>.</p>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -2674,17 +2613,17 @@ ros2 launch my_drone_vision tello_face.launch.py
       <div class="card">
         <div class="icon">⌨</div>
         <h3>Source code</h3>
-        <p><a href="https://github.com/Tyler6666666/106a_final_project.git" target="_blank" rel="noopener">GitHub repository</a> — all ROS 2 nodes, launch files, URDFs, and utility scripts.</p>
+        <p><a href="https://github.com/Tyler6666666/106a_final_project.git" target="_blank" rel="noopener">GitHub repository</a> code and instructionsto reproduce the project.</p>
       </div>
       <div class="card">
         <div class="icon">▶</div>
         <h3>All demo videos</h3>
-        <p><a href="https://drive.google.com/drive/folders/1xDElQW8qhmlZFDzMVDZFHBs9j6IcAnyH?usp=sharing" target="_blank" rel="noopener">Google Drive folder</a> — raw demo recordings from simulation and real flights.</p>
+        <p><a href="https://drive.google.com/drive/folders/1xDElQW8qhmlZFDzMVDZFHBs9j6IcAnyH?usp=sharing" target="_blank" rel="noopener">Google Drive folder</a> Raw demo recordings from simulation and real flights.</p>
       </div>
       <div class="card">
         <div class="icon">📊</div>
         <h3>Presentation slides</h3>
-        <p><a href="https://docs.google.com/presentation/d/1LvLhKlG0UQhenk2a5sxfh90NftjuUv4PibATQm_J-_g/edit?usp=sharing" target="_blank" rel="noopener">Google Slides</a> — the deck from our final demo session.</p>
+        <p><a href="https://docs.google.com/presentation/d/1LvLhKlG0UQhenk2a5sxfh90NftjuUv4PibATQm_J-_g/edit?usp=sharing" target="_blank" rel="noopener">Google Slides</a> Check the deck from our final demo session.</p>
       </div>
     </div>
   </div>
@@ -2707,13 +2646,13 @@ ros2 launch my_drone_vision tello_face.launch.py
           <!-- TODO: fill in your actual AI usage -->
           <tr>
             <td>Claude</td>
-            <td>Ideating ArUco detection strategies and debugging for </td>
-            <td>[TODO: e.g. "Tested in Gazebo, reviewed line-by-line"]</td>
+            <td>Ideating ArUco detection strategies and debugging for Simulation, ROS 2, and System building for Windows WSL and MacOS VM guidance, website boilerplate generation.</td>
+            <td>Tested in Gazebo and treated the AI like a human collaborator. Executed in code we write.</td>
           </tr>
           <tr>
-            <td>[TODO]</td>
-            <td>[TODO]</td>
-            <td>[TODO]</td>
+            <td>ChatGPT</td>
+            <td>Assisting with debugging face-tracking and YOLOv8 integration.</td>
+            <td>Executed in code we write.</td>
           </tr>
         </tbody>
       </table>
