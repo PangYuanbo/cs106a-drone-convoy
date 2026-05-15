@@ -1,0 +1,20 @@
+# Vercel deploy excludes — keep the upload small.
+# Only ship the static site (index.html + videos/ + utility scripts).
+
+.DS_Store
+.git/
+README.md
+font-size-audit.md
+
+# Local source clone of Tyler6666666/106a_final_project (870 MB)
+106a_final_project/
+
+# Local stash for assets we ended up not using
+assets/
+
+# Editor noise
+.vscode/
+.idea/
+*.swp
+*.log
+ogre.log
