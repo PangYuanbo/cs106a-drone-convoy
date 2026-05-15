@@ -2390,35 +2390,53 @@
     <span class="eyebrow">10b · Conclusion</span>
     <h2>What we ended up with</h2>
     <p class="lede">
-      We met our primary goal: 30+ seconds of continuous autonomous following at a safe distance,
-      on both ArUco and face tracking modes, on a $100 drone. The same code path runs in
-      Gazebo simulation and on the real Tello without any changes. The five-state safety machine
-      handled every target-loss scenario we tested — the drone always landed safely.
+      Drone convoying on commodity hardware is still mostly an open problem; we wanted to know how
+      far we could push it on a $100 Tello and a laptop. The answer: further than we expected. The
+      follower autonomously tracked a moving leader for 30+ seconds at a time at a ~1.5 m safe
+      distance, in both ArUco-marker and face-tracking modes, running the same control code in
+      Gazebo and on the real drone. Every time the visual lock was lost, the five-state safety
+      machine landed the drone — no crashes across any of our trials.
+    </p>
+    <p style="color: var(--muted-stone); max-width: 760px; margin-top: 12px;">
+      The most reusable piece of the project isn't any single component — it's the boundary between
+      <em>what we're tracking</em> and <em>how we follow it</em>. Perception (ArUco / YOLOv8 / Haar
+      fallback) and control (PD + low-pass filter on a shared <code>Twist</code> interface) are
+      cleanly separated, so swapping the detector is a launch-file change, not a rewrite. That's
+      the abstraction we'd want in any real deployment, whether the next target is a vehicle, a
+      person, or a thermal blob.
     </p>
 
-    <div class="grid-2" style="margin-top: 24px;">
+    <div class="grid-2" style="margin-top: 28px;">
       <div class="card">
         <div class="icon">✓</div>
-        <h3>Design criteria met</h3>
+        <h3>What stuck</h3>
         <ul class="tight">
-          <li><strong>Stable following at ~1.5 m</strong> — achieved in both sim and real, with PD + EMA smoothing</li>
-          <li><strong>Graceful failure</strong> — four-tier staleness policy + search state machine ensures safe landing in every loss scenario</li>
-          <li><strong>Swappable perception</strong> — ArUco and face modes share identical controller interface; switching is just launching a different node</li>
-          <li><strong>Cheap hardware</strong> — entire system runs on a $100 Tello + a laptop, no GPU required for ArUco mode</li>
+          <li><strong>Stable following at ~1.5 m</strong> — PD + EMA smoothing held the distance across both modes, both environments</li>
+          <li><strong>Safe failure, every time</strong> — the four-tier staleness policy and search state machine landed the drone in every loss scenario we threw at it</li>
+          <li><strong>Perception was hot-swappable</strong> — ArUco and face nodes share the same controller interface; switching is a different launch file, nothing more</li>
+          <li><strong>The whole thing fit in $100 of hardware</strong> — no Jetson, no GPU, no RTK GPS. Just a Tello, a laptop, and Wi-Fi</li>
+          <li><strong>Sim parity</strong> — Gazebo and the physical drone ran the same nodes and topics; what worked in simulation worked on the real flight</li>
         </ul>
       </div>
       <div class="card">
         <div class="icon">△</div>
-        <h3>Known limitations</h3>
+        <h3>Where it still breaks</h3>
         <ul class="tight">
-          <li>Wi-Fi latency caps effective control rate — everything goes through the laptop</li>
-          <li>Outdoor wind makes the Tello drift beyond PD correction range</li>
-          <li>Face tracking depth estimate (bounding-box area) is noisier than ArUco's metric 6-DoF pose</li>
-          <li>ArUco mode requires a printed marker — not always practical in real deployments</li>
-          <li>No obstacle avoidance — the follower only tracks the target, it doesn't see anything else</li>
+          <li><strong>Wi-Fi is the bottleneck</strong> — every frame and every command crosses the laptop, capping the effective control rate</li>
+          <li><strong>Outdoor wind</strong> exceeds the Tello's correction envelope; the PD loop can't compensate fast enough</li>
+          <li><strong>Face-mode depth is noisy</strong> — bounding-box area is a soft proxy compared to ArUco's metric 6-DoF pose</li>
+          <li><strong>ArUco needs a printed tag</strong> in the world, which is rarely practical outside a lab</li>
+          <li><strong>No obstacle awareness</strong> — the follower sees the target and nothing else. A real deployment would need at least a basic safety bubble</li>
         </ul>
       </div>
     </div>
+
+    <p style="margin-top: 28px; color: var(--muted-stone); max-width: 760px;">
+      What we'd carry into a follow-up project: the perception/control split is worth keeping, the
+      safety state machine is worth keeping, and the off-board compute pattern is worth replacing.
+      Everything else — the controller gains, the staleness tiers, the search behavior — is
+      tunable and should be re-tuned for whatever drone, environment, and target come next.
+    </p>
   </div>
 </section>
 
@@ -2436,15 +2454,15 @@
         <div class="avatar">MW</div>
         <span class="role">CS · Cogsci</span>
         <div class="name">Max Wang</div>
-        <div class="bio">Studies ML and RL methods. Interest in autonomous driving and humanoids.</div>
-        <p class="contrib"><strong>Contributions:</strong> Final presentation slides, website design refinement, early-stage project proposal.</p>
+        <div class="bio">Specializes in ML and RL algorithms. Interest in Robotics Simulation and Control.</div>
+        <p class="contrib"><strong>Contributions:</strong> early-stage project proposal, website design and building, Final presentation, MacOS Sim2Real integration.</p>
       </div>
       <div class="team-card">
         <div class="avatar">TZ</div>
         <span class="role">EECS</span>
         <div class="name">Tianren (Tyler) Zeng</div>
         <div class="bio">Computer vision, GPS-free obstacle avoidance, RL for humanoid control.</div>
-        <p class="contrib"><strong>Contributions:</strong> ArUco tag tracking pipeline, PD controller, YOLOv8 face detection, initial ROS 2 Gazebo simulation, final presentation.</p>
+        <p class="contrib"><strong>Contributions:</strong> ArUco tag tracking pipeline, PD controller, YOLOv8 face detection, initial ROS 2 Gazebo simulation building, final presentation.</p>
       </div>
       <div class="team-card">
         <div class="avatar">GJ</div>
