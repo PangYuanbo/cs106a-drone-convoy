@@ -17,3 +17,21 @@
 # Logs
 *.log
 ogre.log
+
+# Node / Next.js — this repo ships static index.html only; build artefacts are local-only
+node_modules/
+.next/
+out/
+tsconfig.tsbuildinfo
+
+# Env files — never commit (.env.local has Vercel OIDC tokens)
+.env
+.env.local
+.env.*.local
+
+# Orphaned Next.js scaffolding kept on disk but not tracked
+app/
+components/
+data/
+public/
+hero-image-examples-mars-explorer.png.webp
