@@ -1657,8 +1657,7 @@
     <div class="demo-block">
       <span class="demo-tag"><span class="live-dot"></span>Demo 01 · Sim · Checkpoint 1</span>
       <h3>Gazebo simulation.</h3>
-      <p>Before any real flight we validated the entire pipeline inside ROS 2 + Gazebo
-         Classic 11. Same nodes, same topics, simulated pixels.</p>
+      <p>For Checkpoint 1, we implemented the first end-to-end follower system entirely in ROS 2 + Gazebo Classic 11. We simulated a Tello camera observing a moving ArUco target &mdash; the perception node estimated <code>/aruco/pose_3d</code>, and the controller converted that pose into <code>/drone1/cmd_vel</code> commands. The same nodes, same topics, and simulated pixels then carried over directly to the real world. This was done entirely on Linux.</p>
       <div class="video-card">
         <div class="video-header">
           <div class="dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
@@ -2698,9 +2697,6 @@ ros2 launch my_drone_vision tello_face.launch.py
   <div class="container">
     <span class="eyebrow">12e · Resources / AI Tools Used</span>
     <h2>How we used AI in this project</h2>
-    <p class="lede">
-      Per course policy, we document all AI tools used during development.
-    </p>
 
     <div class="table-wrap" style="margin-top: 16px;">
       <table>
@@ -2710,8 +2706,8 @@ ros2 launch my_drone_vision tello_face.launch.py
         <tbody>
           <!-- TODO: fill in your actual AI usage -->
           <tr>
-            <td>[TODO: e.g. ChatGPT / Claude / Copilot]</td>
-            <td>[TODO: e.g. "Debugging ROS 2 launch file syntax", "Generating boilerplate code for ROS nodes"]</td>
+            <td>Claude</td>
+            <td>Ideating ArUco detection strategies and debugging for </td>
             <td>[TODO: e.g. "Tested in Gazebo, reviewed line-by-line"]</td>
           </tr>
           <tr>
@@ -2722,11 +2718,6 @@ ros2 launch my_drone_vision tello_face.launch.py
         </tbody>
       </table>
     </div>
-
-    <p style="margin-top: 16px; color: var(--muted-stone); font-size: 13px;">
-      <!-- TODO: add any additional notes about AI usage, e.g. "All AI-generated code was reviewed and tested by the team before merging." -->
-      [TODO: additional notes]
-    </p>
   </div>
 </section>
 
