@@ -298,16 +298,21 @@
     position: absolute; z-index: 3; top: 50%;
     transform: translateY(-50%);
     width: 44px; height: 44px;
-    display: grid; place-items: center;
+    padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
     border-radius: 50%;
     background: rgba(0,0,0,0.32);
     color: #fafaf6;
     border: 1px solid rgba(255,255,255,0.22);
-    font-size: 22px; line-height: 1;
+    line-height: 0;
     cursor: pointer;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     transition: background .15s, transform .15s, border-color .15s;
+  }
+  .hero--video .hero-nav svg {
+    display: block;
+    width: 20px; height: 20px;
   }
   .hero--video .hero-nav:hover {
     background: rgba(0,0,0,0.55);
@@ -1465,8 +1470,8 @@
   <div class="hero-vignette" aria-hidden="true"></div>
 
   <div class="hero-overlay">
-    <span class="hero-pill"><span class="live-dot"></span> EECS / BioE / ME C106A · Spring 2026 · Final Project</span>
-    <h1 class="title">Autonomous Safe<br/>Drone Convoy<br/>Following.</h1>
+    <span class="hero-pill"><span class="live-dot"></span> EECS / BioE / ME C106A · Spring 2026 · Final Project Report</span>
+    <h1 class="title">Autonomous Safe<br/>Drone Convoy<br/>Following</h1>
     <p class="hero-sub">
       Convoy technology: one operator controls a leading target while the followers autonomously follow and perform tasks. In this project, we built a ROS 2 convoy system around DJI drones that turns live camera frames into safe flight commands — implementing the ArUco / solvePnP / YOLOv8 face tracking → pose estimation → PD-smoothed <code>/cmd_vel</code> → Tello RC → recovery → safe-land pipeline.
     </p>
@@ -1482,8 +1487,18 @@
     </div>
   </div>
 
-  <button class="hero-nav prev" id="hero-prev" type="button" aria-label="Previous clip">‹</button>
-  <button class="hero-nav next" id="hero-next" type="button" aria-label="Next clip">›</button>
+  <button class="hero-nav prev" id="hero-prev" type="button" aria-label="Previous clip">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="15 6 9 12 15 18"></polyline>
+    </svg>
+  </button>
+  <button class="hero-nav next" id="hero-next" type="button" aria-label="Next clip">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="9 6 15 12 9 18"></polyline>
+    </svg>
+  </button>
 
   <div class="hero-foot">
     <span class="hero-caption" id="hero-caption"></span>
@@ -3394,14 +3409,12 @@ ros2 launch my_drone_vision tello_face.launch.py
 
     const clips = [
       { src: 'videos/ros-sim.mp4',   label: 'Gazebo · ArUco simulation' },
-      { src: 'videos/cp_demo_a.mp4', label: 'Real Tello · ArUco follow · clip A' },
-      { src: 'videos/cp_demo_b.mp4', label: 'Real Tello · ArUco follow · clip B' },
-      { src: 'videos/cp_face_a.mp4', label: 'Real Tello · Face follow · clip A' },
-      { src: 'videos/cp_face_b.mp4', label: 'Real Tello · Face follow · clip B' },
+      { src: 'videos/cp_demo_b.mp4', label: 'Real Tello · ArUco follow' },
+      { src: 'videos/cp_face_b.mp4', label: 'Real Tello · Face follow' },
     ];
 
     let idx = 0;
-    let swapping = false;
+    let token = 0;     // increments on every goTo; lets us ignore stale events
 
     // build dots
     const dotEls = clips.map((c, i) => {
@@ -3423,35 +3436,49 @@ ros2 launch my_drone_vision tello_face.launch.py
 
     function goTo(n) {
       const next = ((n % clips.length) + clips.length) % clips.length;
-      if (next === idx && video.src.endsWith(clips[idx].src)) return;
+      const sameClip = video.currentSrc && video.currentSrc.endsWith(clips[next].src);
+      if (next === idx && sameClip) return;
       idx = next;
-      swapping = true;
+      const myToken = ++token;
       video.classList.add('is-swapping');
-      // small delay for the fade
-      setTimeout(() => {
-        video.src = clips[idx].src;
-        video.load();
-        const playPromise = video.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {});
-        }
+      if (progressEl) progressEl.style.width = '0%';
+
+      // Set src + load + play immediately — no setTimeout, no race.
+      video.src = clips[idx].src;
+      try { video.load(); } catch (_) {}
+      const p = video.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+
+      // Fade back in once the new clip can actually display
+      const onReady = () => {
+        if (myToken !== token) return;          // a newer click superseded us
         video.classList.remove('is-swapping');
-        swapping = false;
-      }, 180);
+        video.removeEventListener('canplay', onReady);
+        video.removeEventListener('loadeddata', onReady);
+      };
+      video.addEventListener('canplay', onReady);
+      video.addEventListener('loadeddata', onReady);
+
       updateUI();
     }
 
     // events
-    video.addEventListener('ended', () => goTo(idx + 1));
+    video.addEventListener('ended', () => {
+      // Only auto-advance if this `ended` belongs to the currently-loaded clip,
+      // not a stale one from a clip we just swapped out.
+      if (video.currentSrc && video.currentSrc.endsWith(clips[idx].src)) {
+        goTo(idx + 1);
+      }
+    });
     video.addEventListener('timeupdate', () => {
-      if (!progressEl || !video.duration || swapping) return;
+      if (!progressEl || !video.duration) return;
+      if (video.classList.contains('is-swapping')) return;
       const pct = Math.max(0, Math.min(1, video.currentTime / video.duration));
       progressEl.style.width = (pct * 100).toFixed(2) + '%';
     });
-    video.addEventListener('error', () => {
-      // skip a broken clip after a short wait
-      setTimeout(() => goTo(idx + 1), 400);
-    });
+    // No error → auto-advance. Earlier version did `setTimeout(goTo(idx+1), 400)`
+    // on every error event, which fires briefly during every manual src swap and
+    // caused the playlist to jump to a different clip than the one you clicked.
     prevBtn && prevBtn.addEventListener('click', () => goTo(idx - 1));
     nextBtn && nextBtn.addEventListener('click', () => goTo(idx + 1));
 
