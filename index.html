@@ -203,6 +203,173 @@
   .btn .arrow { transition: transform .15s; }
   .btn:hover .arrow { transform: translateX(2px); }
 
+  /* ───────────── Hero · full-bleed video carousel ───────────── */
+  .hero--video {
+    position: relative;
+    padding: 0;
+    min-height: clamp(560px, 92vh, 880px);
+    overflow: hidden;
+    background: var(--deep-shadow);
+    isolation: isolate;
+  }
+  .hero--video .hero-video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    background: #0a0a0a;
+    transition: opacity .35s ease;
+  }
+  .hero--video .hero-video.is-swapping { opacity: 0.0; }
+  .hero--video .hero-vignette {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 50% 38%, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.55) 78%),
+      linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.05) 28%, rgba(0,0,0,0.05) 62%, rgba(0,0,0,0.55) 100%);
+  }
+  .hero--video .hero-overlay {
+    position: relative; z-index: 2;
+    min-height: clamp(560px, 92vh, 880px);
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 28px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; gap: 14px;
+    color: #fafaf6;
+  }
+  .hero--video .hero-pill {
+    background: rgba(255,255,255,0.10);
+    color: #f3f3ee;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.18);
+    margin-bottom: 6px;
+  }
+  .hero--video h1.title {
+    color: #fafaf6;
+    text-shadow: 0 2px 24px rgba(0,0,0,0.45);
+    margin: 4px 0 14px;
+  }
+  .hero--video .hero-sub {
+    color: rgba(250,250,246,0.86);
+    max-width: 760px;
+    margin: 0 auto 22px;
+    text-shadow: 0 1px 14px rgba(0,0,0,0.35);
+  }
+  .hero--video .hero-pills {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 8px; margin-bottom: 22px;
+  }
+  .hero--video .pill {
+    background: rgba(255,255,255,0.10);
+    color: #f3f3ee;
+    border: 1px solid rgba(255,255,255,0.20);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .hero--video .cta-row { justify-content: center; }
+  .hero--video .btn.primary {
+    background: #fafaf6; color: var(--inkwell);
+    border-color: #fafaf6;
+  }
+  .hero--video .btn.primary:hover { background: #fff; }
+  .hero--video .btn.outline {
+    color: #fafaf6; border-color: rgba(255,255,255,0.55);
+    background: transparent;
+  }
+  .hero--video .btn.outline:hover {
+    background: rgba(255,255,255,0.10);
+    color: #fff;
+    border-color: rgba(255,255,255,0.85);
+  }
+  .hero--video .btn.ghost {
+    color: rgba(250,250,246,0.85);
+    border-color: rgba(255,255,255,0.22);
+    background: rgba(0,0,0,0.18);
+  }
+  .hero--video .btn.ghost:hover {
+    background: rgba(0,0,0,0.30);
+    color: #fff;
+  }
+
+  /* page-turn controls */
+  .hero--video .hero-nav {
+    position: absolute; z-index: 3; top: 50%;
+    transform: translateY(-50%);
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.32);
+    color: #fafaf6;
+    border: 1px solid rgba(255,255,255,0.22);
+    font-size: 22px; line-height: 1;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background .15s, transform .15s, border-color .15s;
+  }
+  .hero--video .hero-nav:hover {
+    background: rgba(0,0,0,0.55);
+    border-color: rgba(255,255,255,0.42);
+  }
+  .hero--video .hero-nav:active { transform: translateY(-50%) scale(0.96); }
+  .hero--video .hero-nav.prev { left: 22px; }
+  .hero--video .hero-nav.next { right: 22px; }
+
+  .hero--video .hero-foot {
+    position: absolute; z-index: 3;
+    left: 0; right: 0; bottom: 22px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    pointer-events: none;
+  }
+  .hero--video .hero-caption {
+    pointer-events: auto;
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: rgba(250,250,246,0.78);
+    background: rgba(0,0,0,0.28);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+  .hero--video .hero-dots {
+    display: flex; gap: 8px;
+    pointer-events: auto;
+  }
+  .hero--video .hero-dot {
+    width: 28px; height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.28);
+    border: 0;
+    cursor: pointer;
+    transition: background .2s, width .2s;
+    padding: 0;
+  }
+  .hero--video .hero-dot:hover { background: rgba(255,255,255,0.48); }
+  .hero--video .hero-dot.active {
+    background: #fafaf6;
+    width: 40px;
+  }
+  .hero--video .hero-progress {
+    position: absolute;
+    left: 0; bottom: 0; height: 2px;
+    background: rgba(255,255,255,0.85);
+    width: 0%;
+    z-index: 3;
+    transition: width .12s linear;
+  }
+  @media (max-width: 720px) {
+    .hero--video { min-height: 78vh; }
+    .hero--video .hero-overlay { min-height: 78vh; padding: 0 18px; }
+    .hero--video .hero-nav { width: 38px; height: 38px; font-size: 18px; }
+    .hero--video .hero-nav.prev { left: 10px; }
+    .hero--video .hero-nav.next { right: 10px; }
+    .hero--video .hero-foot { bottom: 14px; }
+  }
+
   /* ───────────── Hero code window ───────────── */
   .code-window {
     background: var(--code-bg);
@@ -1291,69 +1458,38 @@
   </div>
 </nav>
 
-<!-- ════════════ HERO ════════════ -->
-<header class="hero">
-  <div class="container">
-    <div class="hero-grid">
-      <!-- left -->
-      <div>
-        <span class="hero-pill"><span class="live-dot"></span> EECS / BioE / ME C106A · Spring 2026 · Final Project</span>
-        <h1 class="title">Autonomous Safe<br/>Drone Convoy<br/>Following.</h1>
-        <p class="hero-sub">
-          We built a leader–follower drone system. One drone is teleoperated and
-          carries a visual target; a Tello follower locks on using computer vision
-          and PD control, keeps a safe distance, and lands on its own if it loses
-          sight of the target. It supports two tracking modes (ArUco marker and face)
-          on the same ROS&nbsp;2 controller.
-        </p>
-        <div style="margin-bottom: 22px;">
-          <span class="pill aruco">ArUco · 6-DoF</span>
-          <span class="pill face">YOLOv8 · Face</span>
-          <span class="pill">ROS 2 Humble</span>
-        </div>
-        <div class="cta-row">
-          <a class="btn primary" href="#demos">Watch the demos <span class="arrow">→</span></a>
-          <a class="btn outline" href="#architecture">System architecture</a>
-          <a class="btn ghost" href="https://github.com/Tyler6666666/106a_final_project.git" target="_blank" rel="noopener">GitHub repo</a>
-        </div>
-      </div>
+<!-- ════════════ HERO · full-bleed video carousel ════════════ -->
+<header class="hero hero--video" id="hero-video-root">
+  <video class="hero-video" id="hero-video"
+         muted playsinline autoplay preload="auto" aria-hidden="true"></video>
+  <div class="hero-vignette" aria-hidden="true"></div>
 
-      <!-- right: live drone sim · same logic as #online, no toolbar -->
-      <div class="hero-sim">
-        <div class="os-titlebar">
-          <div class="code-dots"><i class="r"></i><i class="y"></i><i class="g"></i></div>
-          <span class="os-title">drone_sim · live</span>
-          <div class="hero-sim-pill">
-            <span class="live-dot"></span>FOLLOW · /cmd_vel
-          </div>
-        </div>
-        <div class="os-stage hero-sim-stage" id="hero-sim-stage">
-          <canvas class="os-canvas" id="hero-sim-canvas"></canvas>
-          <div class="hero-sim-hint" id="hero-sim-hint">↓ drag the tag · or just watch</div>
-        </div>
-      </div>
+  <div class="hero-overlay">
+    <span class="hero-pill"><span class="live-dot"></span> EECS / BioE / ME C106A · Spring 2026 · Final Project</span>
+    <h1 class="title">Autonomous Safe<br/>Drone Convoy<br/>Following.</h1>
+    <p class="hero-sub">
+      Convoy technology: one operator controls a leading target while the followers autonomously follow and perform tasks. In this project, we built a ROS 2 convoy system around DJI drones that turns live camera frames into safe flight commands — implementing the ArUco / solvePnP / YOLOv8 face tracking → pose estimation → PD-smoothed <code>/cmd_vel</code> → Tello RC → recovery → safe-land pipeline.
+    </p>
+    <div class="hero-pills">
+      <span class="pill aruco">ArUco Tag</span>
+      <span class="pill face">YOLOv8 FaceTracking</span>
+      <span class="pill">ROS2</span>
     </div>
-
-    <!-- stats -->
-    <div class="stats">
-      <div class="stat">
-        <div class="num">3</div>
-        <div class="lbl">Live demos</div>
-      </div>
-      <div class="stat">
-        <div class="num">2</div>
-        <div class="lbl">Perception modes</div>
-      </div>
-      <div class="stat">
-        <div class="num">$100</div>
-        <div class="lbl">Drone · self-funded</div>
-      </div>
-      <div class="stat">
-        <div class="num">30 s</div>
-        <div class="lbl">Stable-tracking bar</div>
-      </div>
+    <div class="cta-row">
+      <a class="btn primary" href="#demos">Watch the demos <span class="arrow">→</span></a>
+      <a class="btn outline" href="#architecture">System architecture</a>
+      <a class="btn ghost" href="https://github.com/Tyler6666666/106a_final_project.git" target="_blank" rel="noopener">GitHub repo</a>
     </div>
   </div>
+
+  <button class="hero-nav prev" id="hero-prev" type="button" aria-label="Previous clip">‹</button>
+  <button class="hero-nav next" id="hero-next" type="button" aria-label="Next clip">›</button>
+
+  <div class="hero-foot">
+    <span class="hero-caption" id="hero-caption"></span>
+    <div class="hero-dots" id="hero-dots" role="tablist" aria-label="Hero clips"></div>
+  </div>
+  <div class="hero-progress" id="hero-progress"></div>
 </header>
 
 <hr class="section-divider" />
@@ -1362,15 +1498,12 @@
 <section id="motivation">
   <div class="container">
     <span class="eyebrow">02 · Introduction</span>
-    <h2>Why drone convoying, and why it matters</h2>
+    <h2>Why drone convoying and why it matters</h2>
     <div class="grid-2" style="margin-top: 24px;">
       <div>
         <p class="lede">
-          Convoying — having one operator control a lead vehicle while followers tag along
-          autonomously — is already common for ground vehicles (think truck platooning on
-          highways). For drones, though, it's barely been explored. We think it's useful in
-          scenarios where full autonomy is too risky, like inspection, search-and-rescue, or
-          warehouse logistics.
+          Convoying in robotics is defined as having one operator control a lead vehicle while followers follow
+          autonomously. It is a common practice for ground mobile vehicles, but rarely explored in drone applications. In this project, we explored deeply how Drone Convoying could be implemented, and we want to investigate how to create robust drone convoying technology in a resource-constraint setting, in the hopes that it will extend to scenarios like inspection, search-and-rescue, or warehouse logistics.
         </p>
         <p>
           We built a prototype on the cheapest hardware we could find:
@@ -1391,22 +1524,22 @@
       </div>
     </div>
 
-    <h3 style="margin-top: 48px;">Aim · autonomous following with safe failure modes.</h3>
+    <h3 style="margin-top: 48px;"> Our Objectives: Autonomous following with safe failure modes</h3>
     <div class="grid-3" style="margin-top: 16px;">
       <div class="card">
         <div class="icon">◎</div>
         <h3>Goal</h3>
-        <p>Stable moderate-speed following using ArUco markers, with safe-landing protocols if the visual lock is lost.</p>
+        <p>Stable moderate-speed following using ArUco markers and face tracking, with safe-landing protocols if the visual lock is lost.</p>
       </div>
       <div class="card">
         <div class="icon">✓</div>
         <h3>Success bar</h3>
-        <p><strong>30 s of continuous autonomous tracking</strong> — maintaining a safe distance the entire time.</p>
+        <p><strong>30 s of continuous autonomous tracking</strong> and maintain a safe social distance the entire time.</p>
       </div>
       <div class="card">
         <div class="icon">↗</div>
-        <h3>Stretch</h3>
-        <p>Anticipate target acceleration · reacquire after temporary occlusion · extend perception swap to face / person tracking.</p>
+        <h3>Robust Control</h3>
+        <p>We have implemented features that allow the follower to anticipate the leader's acceleration, reacquire after temporary occlusion (when the follower can't find the leader), and extend perception to face/person tracking.</p>
       </div>
     </div>
 
@@ -1420,12 +1553,13 @@
       <div class="card">
         <div class="icon">🏗</div>
         <h3>Infrastructure inspection</h3>
-        <p>Bridges, power lines, pipelines — an inspector flies the lead drone along the structure, and followers record from different angles automatically. Cuts crew size and keeps people away from dangerous spots.</p>
+        <p> In an infrastructure inspection scenario, an inspector could fly a leader drone along the structure and have followers record from different angles to complete the inspection. This would cut crew size and keep people away from dangerous spots effectively.</p>
       </div>
       <div class="card">
         <div class="icon">📦</div>
         <h3>Warehouse & delivery</h3>
-        <p>In large warehouses or campus delivery, a convoy of drones can follow a lead vehicle (ground or air) along a route, each carrying a different package. One operator handles the whole fleet.</p>
+        <p> As in the large warehouses or campus delivery situations, the convoying system allows a fleet of drones to follow a lead vehicle (ground or air) along a route, each carrying a different package. One operator can handle the whole fleet, reducing the need for multiple pilots and enabling more efficient logistics operations.
+        </p>
       </div>
     </div>
   </div>
@@ -1441,19 +1575,13 @@
 
     <h3>Real-world extensions</h3>
     <p>
-      The core idea — a vision-based follower drone that doesn't need GPS or expensive sensors — could
-      scale in several directions. In <strong>disaster response</strong>, a convoy of follower drones could
-      trail a human-piloted lead drone into areas with no GPS or cell coverage (collapsed buildings,
-      dense forests) and collectively map the scene or relay communications. In <strong>agriculture</strong>,
+      The design of vision-based follower drone that doesn't need GPS or expensive sensors could be able to 
+      scale in several directions. For example, In <strong>disaster response</strong>, a convoy of follower drones could
+      trail a human-piloted lead drone into areas with no GPS or cell coverage and collectively map the scene or relay communications. In <strong>agriculture</strong>,
       a lead drone flying a survey pattern could have followers at different altitudes carrying different
       sensors (multispectral, thermal) without needing each one to be independently piloted. In
-      <strong>film and media</strong>, multi-angle drone shots currently require one pilot per drone —
-      a convoy system would let a single cinematographer control the formation.
-    </p>
-    <p>
-      The swappable perception design is also relevant: in real deployments, you might track a
-      vehicle (not a marker or face) using a different detector, but the controller and safety state
-      machine would stay the same.
+      <strong>film and media</strong>, multi-angle drone shots currently require one pilot per drone, but
+      a convoy system would let a single cinematographer control the formation. The development of convoying capabilities could unlock new applications and reduce costs in any domain where multiple drones are useful but full autonomy is too risky or expensive.
     </p>
 
     <h3 style="margin-top: 32px;">Societal implications</h3>
@@ -3253,7 +3381,101 @@ ros2 launch my_drone_vision tello_face.launch.py
     });
   })();
 
-  // ───────────── Hero sim · same logic, no toolbar ─────────────
+  // ───────────── Hero · full-bleed video carousel ─────────────
+  (function () {
+    const root = document.getElementById('hero-video-root');
+    const video = document.getElementById('hero-video');
+    const dotsWrap = document.getElementById('hero-dots');
+    const captionEl = document.getElementById('hero-caption');
+    const progressEl = document.getElementById('hero-progress');
+    const prevBtn = document.getElementById('hero-prev');
+    const nextBtn = document.getElementById('hero-next');
+    if (!root || !video || !dotsWrap) return;
+
+    const clips = [
+      { src: 'videos/ros-sim.mp4',   label: 'Gazebo · ArUco simulation' },
+      { src: 'videos/cp_demo_a.mp4', label: 'Real Tello · ArUco follow · clip A' },
+      { src: 'videos/cp_demo_b.mp4', label: 'Real Tello · ArUco follow · clip B' },
+      { src: 'videos/cp_face_a.mp4', label: 'Real Tello · Face follow · clip A' },
+      { src: 'videos/cp_face_b.mp4', label: 'Real Tello · Face follow · clip B' },
+    ];
+
+    let idx = 0;
+    let swapping = false;
+
+    // build dots
+    const dotEls = clips.map((c, i) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'hero-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', c.label);
+      dot.addEventListener('click', () => goTo(i));
+      dotsWrap.appendChild(dot);
+      return dot;
+    });
+
+    function updateUI() {
+      dotEls.forEach((d, i) => d.classList.toggle('active', i === idx));
+      if (captionEl) {
+        captionEl.textContent = `${String(idx + 1).padStart(2, '0')} · ${clips[idx].label}`;
+      }
+    }
+
+    function goTo(n) {
+      const next = ((n % clips.length) + clips.length) % clips.length;
+      if (next === idx && video.src.endsWith(clips[idx].src)) return;
+      idx = next;
+      swapping = true;
+      video.classList.add('is-swapping');
+      // small delay for the fade
+      setTimeout(() => {
+        video.src = clips[idx].src;
+        video.load();
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {});
+        }
+        video.classList.remove('is-swapping');
+        swapping = false;
+      }, 180);
+      updateUI();
+    }
+
+    // events
+    video.addEventListener('ended', () => goTo(idx + 1));
+    video.addEventListener('timeupdate', () => {
+      if (!progressEl || !video.duration || swapping) return;
+      const pct = Math.max(0, Math.min(1, video.currentTime / video.duration));
+      progressEl.style.width = (pct * 100).toFixed(2) + '%';
+    });
+    video.addEventListener('error', () => {
+      // skip a broken clip after a short wait
+      setTimeout(() => goTo(idx + 1), 400);
+    });
+    prevBtn && prevBtn.addEventListener('click', () => goTo(idx - 1));
+    nextBtn && nextBtn.addEventListener('click', () => goTo(idx + 1));
+
+    // keyboard: ← / → when hero is in viewport
+    document.addEventListener('keydown', (e) => {
+      if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+      const rect = root.getBoundingClientRect();
+      const visible = rect.bottom > 60 && rect.top < window.innerHeight * 0.6;
+      if (!visible) return;
+      if (e.key === 'ArrowRight') goTo(idx + 1);
+      else if (e.key === 'ArrowLeft') goTo(idx - 1);
+    });
+
+    // init
+    video.muted = true;
+    video.playsInline = true;
+    video.src = clips[0].src;
+    video.load();
+    const p = video.play();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+    updateUI();
+  })();
+
+  // ───────────── Hero sim · legacy (disabled — replaced by video carousel above) ─────────────
   (function () {
     const stage = document.getElementById('hero-sim-stage');
     const cv    = document.getElementById('hero-sim-canvas');
